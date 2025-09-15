@@ -114,21 +114,16 @@ MEDIA_ROOT = BASE_DIR / "media"
 MEDIA_URL = "/media/"
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # vaqtinchalik fayllar uchun alohida papka
 TMP_UPLOAD_DIR = MEDIA_ROOT / "tmp"
 os.makedirs(TMP_UPLOAD_DIR, exist_ok=True)
-
-STATICFILES_DIRS = [
-    BASE_DIR / "static",  # sizda "frontend" emas, "static" bo‘lsa
-]
-
-# STATIC_ROOT = BASE_DIR / "staticfiles"
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
-
 
 # Media fayllar uchun asosiy URL
 SITE_URL = "http://127.0.0.1:4040"  # Localhost uchun
