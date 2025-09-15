@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Панель{% endblock %}
+
+{% block content %}
+<div class="card shadow">
+  <div class="card-body">
+    <h3>Здравствуйте, {{ request.user.username }} 👋</h3>
+    <p>Вы вошли как <strong>риелтор</strong>. Теперь вы можете добавлять свои объявления.</p>
+    <a href="{% url 'real_estate_create' %}" class="btn btn-success">+ Добавить объявление</a>
+    <a href="{% url 'logout' %}" class="btn btn-outline-danger">Выйти</a>
+  </div>
+</div>
+{% endblock %}

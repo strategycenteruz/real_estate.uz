@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Подтверждение выхода{% endblock %}
+
+{% block content %}
+<div class="text-center">
+  <h2>🚪 Вы уверены, что хотите выйти?</h2>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Да, выйти</button>
+    <a href="{% url 'all_ads' %}" class="btn btn-secondary">Отмена</a>
+  </form>
+</div>
+{% endblock %}

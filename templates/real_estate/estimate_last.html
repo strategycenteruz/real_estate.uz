@@ -1,0 +1,428 @@
+{% load static %}
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Онлайн оценка недвижимости</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  <style>
+
+    .hero {
+      text-align: center;
+      padding: 60px 20px 40px;
+    }
+    .hero h1 {
+      font-weight: 800;
+      font-size: 2.5rem;
+      color: #0d6efd;
+    }
+    .hero p {
+      font-size: 1.2rem;
+      color: #555;
+    }
+    .estimate-card, .result-card {
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      padding: 25px;
+      transition: transform 0.3s ease;
+    }
+    .estimate-card:hover {
+      transform: translateY(-5px);
+    }
+    .section-title {
+      font-weight: 700;
+      font-size: 1.6rem;
+      color: #0d6efd;
+      margin-bottom: 20px;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .img-preview {
+      width: 90px;
+      height: 70px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin: 4px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .img-preview:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    .price-animate {
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); color: #198754; }
+      100% { transform: scale(1); }
+    }
+    .ribbon {
+      width: 120px;
+      height: 30px;
+      background: #198754;
+      color: #fff;
+      text-align: center;
+      line-height: 30px;
+      font-size: 0.9rem;
+      font-weight: bold;
+      border-radius: 5px;
+      position: absolute;
+      top: -15px;
+      right: -10px;
+      transform: rotate(10deg);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+  </style>
+</head>
+<body>
+  <!-- Hero Section -->
+  <div class="hero animate__animated animate__fadeInDown">
+    <h1>Онлайн оценка недвижимости</h1>
+    <p>Введите данные объекта, загрузите фото и получите моментальную оценку 🏡</p>
+  </div>
+
+  <div class="container main-container">
+    <div class="row g-4">
+      <!-- Form -->
+      <div class="col-lg-6">
+        <h3 class="section-title">Заполните форму</h3>
+        <form id="estimateForm" method="post" enctype="multipart/form-data" class="estimate-card">
+          {% csrf_token %}
+          <div class="mb-3">{{ form.property_type.label_tag }} {{ form.property_type }}</div>
+          <div class="mb-3">{{ form.district.label_tag }} {{ form.district }}</div>
+
+          <!-- Dynamic fields -->
+          <div id="field_area" class="mb-3 d-none">{{ form.area.label_tag }} {{ form.area }}</div>
+          <div id="field_land_area" class="mb-3 d-none">{{ form.land_area.label_tag }} {{ form.land_area }}</div>
+          <div id="field_rooms" class="mb-3 d-none">{{ form.rooms.label_tag }} {{ form.rooms }}</div>
+          <div id="field_floor" class="mb-3 d-none">{{ form.floor.label_tag }} {{ form.floor }}</div>
+          <div id="field_total_floors" class="mb-3 d-none">{{ form.total_floors.label_tag }} {{ form.total_floors }}</div>
+          <div id="field_condition" class="mb-3 d-none">{{ form.condition.label_tag }} {{ form.condition }}</div>
+          <div id="field_furniture" class="mb-3 d-none">{{ form.has_furniture }} {{ form.has_furniture.label_tag }}</div>
+          <div id="field_appliances" class="mb-3 d-none">{{ form.has_appliances }} {{ form.has_appliances.label_tag }}</div>
+          <div id="field_parking" class="mb-3 d-none">{{ form.has_parking }} {{ form.has_parking.label_tag }}</div>
+          <div id="field_rent_price" class="mb-3 d-none">{{ form.rent_price.label_tag }} {{ form.rent_price }}</div>
+
+          <!-- Yangi maydonlar -->
+          <div id="field_base_price_m2" class="mb-3 d-none">{{ form.base_price_m2.label_tag }} {{ form.base_price_m2 }}</div>
+          <div id="field_base_price_sotix" class="mb-3 d-none">{{ form.base_price_sotix.label_tag }} {{ form.base_price_sotix }}</div>
+
+          <!-- File upload -->
+          <div class="mb-3">
+            <label class="form-label fw-bold">📷 Загрузите фото:</label>
+            <input type="file" id="id_images" name="images" multiple class="form-control">
+          </div>
+          <div id="preview" class="d-flex flex-wrap mt-2"></div>
+
+          <div class="d-flex gap-2 mt-3">
+            <button id="btnEstimate" type="submit" class="btn btn-primary w-50">Оценить</button>
+            <button id="btnClear" type="button" class="btn btn-outline-secondary w-50">Очистить</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Result -->
+      <div class="col-lg-6">
+        <h3 class="section-title">Результат</h3>
+        <div id="result" class="result-card animate__animated animate__fadeIn" style="min-height:250px;">
+          <p class="text-muted text-center my-5">Результат появится здесь после оценки 🏠</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- Natijalar bloki (boshlang‘ichda yashirin) -->
+<div id="result-section" class="mt-4" style="display: none;">
+
+  <!-- Realtor Info (faqat natijadan keyin chiqadi) -->
+  <div class="realtor-card mt-4 p-4 shadow-sm rounded-4">
+    <div class="d-flex align-items-center">
+      <div class="position-relative me-3">
+        <img src="{% static 'img/realtor.jpg' %}" alt="Realtor"
+             class="rounded-circle border border-3 border-success"
+             width="80" height="80">
+        <span class="status-dot bg-success"></span>
+      </div>
+      <div>
+        <h5 class="mb-1 fw-bold">Наш специалист</h5>
+        <p class="mb-1 text-muted">💼 Агент по недвижимости</p>
+        <p class="mb-1">📞 +998 (90) 123-45-67</p>
+        <div class="d-flex gap-2">
+          <a href="https://t.me/your_agency" target="_blank"
+             class="btn btn-sm btn-primary">💬 Telegram</a>
+          <a href="tel:+998901234567" class="btn btn-sm btn-outline-success">📞 Позвонить</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!--<style>-->
+<!--.realtor-card {-->
+<!--  background: linear-gradient(135deg, #f9f9f9, #ffffff);-->
+<!--  transition: transform 0.3s, box-shadow 0.3s;-->
+<!--}-->
+<!--.realtor-card:hover {-->
+<!--  transform: translateY(-5px);-->
+<!--  box-shadow: 0 6px 18px rgba(0,0,0,0.15);-->
+<!--}-->
+<!--.status-dot {-->
+<!--  position: absolute;-->
+<!--  bottom: 8px;-->
+<!--  right: 8px;-->
+<!--  width: 14px;-->
+<!--  height: 14px;-->
+<!--  border-radius: 50%;-->
+<!--  border: 2px solid #fff;-->
+<!--}-->
+<!--</style>-->
+
+<!--<script>-->
+<!--document.addEventListener("DOMContentLoaded", function() {-->
+<!--  const form = document.getElementById("estimateForm");-->
+<!--  const resultSection = document.getElementById("result-section");-->
+<!--  const resultDiv = document.getElementById("result");-->
+
+<!--  form.addEventListener("submit", async function(e) {-->
+<!--    e.preventDefault();-->
+
+<!--    resultDiv.innerHTML = `<div class="text-center py-4">-->
+<!--      <div class="spinner-border" role="status"></div>-->
+<!--      <div class="mt-2">Оцениваем...</div></div>`;-->
+
+<!--    const fd = new FormData(form);-->
+<!--    const response = await fetch("{% url 'estimate' %}", {-->
+<!--      method: "POST",-->
+<!--      body: fd,-->
+<!--      headers: {"X-Requested-With": "XMLHttpRequest"}-->
+<!--    });-->
+<!--    const data = await response.json();-->
+
+<!--    if (data.success) {-->
+<!--      // Natija chiqaramiz-->
+<!--      resultDiv.innerHTML = `-->
+<!--        <div class="alert alert-success shadow-sm rounded-4">-->
+<!--          <h4 class="fw-bold">✅ Результат оценки</h4>-->
+<!--          <p class="mb-0">Ориентировочная стоимость:-->
+<!--            <span class="fw-bold text-success">${data.price}</span>-->
+<!--          </p>-->
+<!--          <p class="text-muted mt-2">Тип: <b>${data.property_type}</b> | Район: <b>${data.district}</b></p>-->
+<!--        </div>-->
+<!--      `;-->
+<!--      resultSection.style.display = "block"; // ✅ faqat natija kelganda ko‘rsatamiz-->
+<!--    } else {-->
+<!--      resultDiv.innerHTML = `<div class="alert alert-danger">Ошибка: ${data.error || JSON.stringify(data.errors)}</div>`;-->
+<!--      resultSection.style.display = "block";-->
+<!--    }-->
+<!--  });-->
+<!--});-->
+<!--</script>-->
+
+
+
+  <!-- JS (sizning kodlaringiz shu joyda qoladi, men o‘zgartirmadim) -->
+  {{ block.super|default_if_none:"" }}
+  <script>
+    // --- Helper: show/hide fields by property type ---
+    function toggleFieldsOnType() {
+    const t = document.getElementById("id_property_type").value;
+    const ids = ["field_area","field_land_area","field_rooms","field_floor","field_total_floors","field_condition",
+                 "field_furniture","field_appliances","field_parking","field_rent_price","field_base_price_m2","field_base_price_sotix"];
+    ids.forEach(id => document.getElementById(id).classList.add("d-none"));
+
+    if (t === "novostroyka" || t === "vtorichka" || t === "kommerciya" || t === "kommersiya" || t === "arenda") {
+      // kvartira yoki tijorat uchun kvadrat metr narxi
+      ["field_area","field_rooms","field_floor","field_total_floors","field_condition","field_furniture","field_appliances","field_base_price_m2"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove("d-none");
+      });
+      if (t === "kommerciya" || t === "kommersiya") {
+        ["field_parking","field_rent_price"].forEach(id => document.getElementById(id).classList.remove("d-none"));
+      }
+      if (t === "arenda") {
+        ["field_rent_price"].forEach(id => document.getElementById(id).classList.remove("d-none"));
+      }
+    } else if (t === "uchastok") {
+      // faqat sotix narxi
+      ["field_land_area","field_condition","field_base_price_sotix"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove("d-none");
+      });
+    }
+  }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      const propSelect = document.getElementById("id_property_type");
+      if (propSelect) {
+        propSelect.addEventListener("change", toggleFieldsOnType);
+        toggleFieldsOnType(); // init on load
+      }
+
+      // image preview
+    const imagesInput = document.getElementById("id_images");
+    const preview = document.getElementById("preview");
+
+    if (imagesInput) {
+      imagesInput.addEventListener("change", function () {
+        preview.innerHTML = "";
+        Array.from(this.files).slice(0, 10).forEach(file => {
+          if (!file.type.startsWith("image/")) return;
+          const reader = new FileReader();
+          reader.onload = e => {
+            const img = document.createElement("img");
+            img.src = e.target.result;
+            img.className = "img-preview";
+            preview.appendChild(img);
+          };
+          reader.readAsDataURL(file);
+        });
+      });
+    }
+
+// --- Real-time hisoblash ---
+function triggerRealtimeEstimate() {
+  const form = document.getElementById("estimateForm");
+  const resultDiv = document.getElementById("result");
+
+  const card = resultDiv.querySelector(".result-card");
+  card.classList.add("custom-fade");
+  setTimeout(() => card.classList.add("show"), 50);
+
+  const fd = new FormData(form);
+
+  fetch("{% url 'estimate' %}", {
+    method: "POST",
+    body: fd,
+    headers: {
+      "X-Requested-With": "XMLHttpRequest"
+    }
+  })
+  .then(resp => resp.json())
+  .then(data => {
+    if (!data.success) {
+      resultDiv.innerHTML = `<div class="alert alert-danger">Ошибка: ${data.error || JSON.stringify(data.errors)}</div>`;
+      return;
+    }
+
+    let html = `
+    <div class="result-card animate__animated animate__fadeIn shadow-lg p-4 rounded bg-white position-relative">
+
+      <div class="ribbon"><span>✔ Оценено</span></div>
+      <h4 class="mb-3 text-primary fw-bold">Результат оценки</h4>
+      <div class="display-6 fw-bold text-success price-animate">${data.price}</div>
+      <p class="text-muted mb-3">Тип: <strong>${data.property_type}</strong> &nbsp; | &nbsp; Район: <strong>${data.district}</strong></p>
+      <hr>
+      <h6 class="fw-bold">📊 Детали расчета:</h6>
+      <ul class="list-group list-group-flush mb-3">`;
+
+
+    data.details.forEach(d => html += `<li class="list-group-item small">${d}</li>`);
+    html += `</ul></div>`;
+
+    resultDiv.innerHTML = html;
+        })
+        .catch(err => {
+          console.error(err);
+          resultDiv.innerHTML = `<div class="alert alert-danger">Серверная ошибка.</div>`;
+        });
+      }
+
+      // --- Event listenerlar ---
+      document.querySelectorAll("#estimateForm input, #estimateForm select").forEach(el => {
+        el.addEventListener("input", () => {
+          clearTimeout(window.realtimeTimer);
+          window.realtimeTimer = setTimeout(triggerRealtimeEstimate, 600); // 0.6s delay
+        });
+      });
+
+
+      // AJAX submit
+      const form = document.getElementById("estimateForm");
+      const resultDiv = document.getElementById("result");
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        // spinner
+        resultDiv.innerHTML = `<div class="text-center py-4">
+        <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span></div>
+        <div class="mt-2">Оцениваем...</div></div>`;
+
+        const fd = new FormData(form);
+        fetch("{% url 'estimate' %}", {
+          method: "POST",
+          body: fd,
+          headers: {
+            "X-Requested-With": "XMLHttpRequest"
+          }
+        })
+        .then(resp => resp.json())
+        .then(data => {
+          if (!data.success) {
+            resultDiv.innerHTML = `<div class="alert alert-danger">Ошибка: ${data.error || JSON.stringify(data.errors)}</div>`;
+            return;
+          }
+
+          // noodatiy interaktiv UI
+          let html = `
+            <div class="result-card animate__animated animate__fadeInUp shadow-lg p-4 rounded bg-white position-relative">
+              <div class="ribbon"><span>✔ Оценено</span></div>
+              <h4 class="mb-3 text-primary fw-bold">Результат оценки</h4>
+              <div class="display-4 fw-bold text-success price-animate">${data.price}</div>
+              <p class="text-muted mb-3">Тип: <strong>${data.property_type}</strong> &nbsp; | &nbsp; Район: <strong>${data.district}</strong></p>
+              <hr>
+              <h6 class="fw-bold">📊 Детали расчета:</h6>
+              <ul class="list-group list-group-flush mb-3">`;
+
+          data.details.forEach(d => html += `<li class="list-group-item small">${d}</li>`);
+          html += `</ul>`;
+
+
+          if (data.images && data.images.length) {
+            html += `<div class="mt-3">
+                      <strong>📷 Загруженные фото:</strong>
+                      <div class="d-flex flex-wrap mt-2">`;
+            data.images.forEach(img => {
+              html += `<img src="${img.url}" class="img-preview border shadow-sm" title="${img.name}">`;
+            });
+            html += `</div></div>`;
+          }
+
+          html += `</div>`;
+
+          html += `
+
+          <div class="alert alert-warning mt-3">
+            ⚠️ Это оценка произведена в ознакомительных целях и является приблизительной.<br>
+            Если вы хотите получить точную оценку от опытного риэлтора, свяжитесь с нами!
+          </div>
+
+        `;
+          resultDiv.innerHTML = html;
+        })
+          .catch(err => {
+            console.error(err);
+            resultDiv.innerHTML = `<div class="alert alert-danger">Серверная ошибка.</div>`;
+          });
+        });
+      // Clear button
+      const btnClear = document.getElementById("btnClear");
+      if (btnClear) {
+        btnClear.addEventListener("click", () => {
+          form.reset();
+          preview.innerHTML = "";
+          toggleFieldsOnType();
+          resultDiv.innerHTML = `<p class="text-muted">Результат появится здесь после оценки.</p>`;
+        });
+      }
+    });
+
+  </script>
+
+</body>
+</html>

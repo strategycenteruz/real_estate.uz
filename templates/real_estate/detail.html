@@ -1,0 +1,406 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+{% block content %}
+
+<link href="{% static 'css/detail.css' %}" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+<!-- GLightbox CSS -->
+<link href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" rel="stylesheet"/>
+
+<div class="container py-4">
+    <!-- Top Section with Image Slider & Main Info -->
+     <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <a href="javascript:history.back()" class="btn btn-sm btn-outline-secondary me-2">
+                ⬅️ Назад
+            </a>
+            <h3 class="fw-bold d-inline">{{ category_label }}</h3>
+        </div>
+        <span class="text-muted">{{ properties.paginator.count }} объявлений</span>
+    </div>
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="position-relative mb-3">
+
+                <div class="carousel slide shadow-sm rounded" data-bs-ride="carousel" id="imageCarousel">
+                    <div class="carousel-inner">
+                        {% for img in real_estate.images.all %}
+                        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                            <a class="glightbox" data-gallery="property-gallery" href="{{ img.image.url }}">
+                                <img alt="Image" class="d-block w-100" src="{{ img.image.url }}"
+                                     style="max-height: 460px;">
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <button class="carousel-control-prev" data-bs-slide="prev" data-bs-target="#imageCarousel"
+                            type="button">
+                        <span class="carousel-control-prev-icon"></span>
+                    </button>
+                    <button class="carousel-control-next" data-bs-slide="next" data-bs-target="#imageCarousel"
+                            type="button">
+                        <span class="carousel-control-next-icon"></span>
+                    </button>
+
+                    <!-- Rasm soni ko'rsatkich -->
+                    <div class="position-absolute bottom-0 end-0 bg-dark text-white px-2 py-1 rounded m-2"
+                         id="image-counter"
+                         style="opacity: 0.8; font-size: 14px;">
+                        1 / {{ real_estate.images.count }}
+                    </div>
+                </div>
+
+               <!-- Favorite (izbrannoye) tugma -->
+                <a href="{% url 'toggle_favorite' real_estate.pk %}"
+                   class="position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow
+                          {% if request.user.is_authenticated and real_estate in request.user.favorite_ads.all %}
+                             bg-warning text-white
+                          {% else %}
+                             bg-light text-secondary
+                          {% endif %}"
+                   style="z-index: 10;">
+
+                    {% if request.user.is_authenticated and real_estate in request.user.favorite_ads.all %}
+                        <i class="bi bi-star-fill fs-5"></i>
+                    {% else %}
+                        <i class="bi bi-star fs-5"></i>
+                    {% endif %}
+                </a>
+
+            </div>
+        </div>
+
+       <div class="col-lg-4">
+        <div class="main-card shadow-sm">
+            <h4 class="mb-2 text-dark">{{ real_estate.title }}</h4>
+            <br>
+            <p class="text-muted">{{ real_estate.address }}</p>
+            <br>
+            <p><strong>Район:</strong> {{ real_estate.get_district_display }}</p>
+            <p><strong>Площадь:</strong> {{ real_estate.area }} м²</p>
+            <p><strong>Комнат:</strong> {{ real_estate.rooms }}</p>
+            <p><strong>Цена:</strong>
+                <span class="text-success fs-5">
+                    {{ real_estate.price_usd|floatformat:0|intcomma }} $
+                </span>
+            </p>
+            <br><br>
+            {% if real_estate.telegram %}
+            <a href="https://t.me/{{ real_estate.telegram|cut:'@' }}" target="_blank"
+               class="btn btn-contact w-100 mt-2">
+                Написать в Telegram
+            </a>
+            {% endif %}
+
+            <button class="btn btn-contact w-100 mt-3"
+                    data-bs-target="#contactModal"
+                    data-bs-toggle="modal"
+                    type="button">
+                Контакты застройщика
+            </button>
+        </div>
+    </div>
+
+    </div>
+
+    <div aria-hidden="true" aria-labelledby="contactModalLabel" class="modal fade" id="contactModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="contactModalLabel">Связь с застройщиком</h5>
+                    <button aria-label="Yopish" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            type="button"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p class="fs-5 mb-3">Номер телефона:</p>
+                    <a class="fs-4 fw-bold text-decoration-none text-dark" href="tel:{{ real_estate.phone }}">
+                        {{ real_estate.phone }}
+                    </a>
+                    <div class="mt-4">
+                        <a class="btn btn-success btn-lg" href="tel:{{ real_estate.phone }}">
+                            Позвонить
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+    <!-- Most Important Info -->
+    <div class="card p-4 shadow-sm mb-4 mt-3">
+        <h5 class="mb-3">Самое важное</h5>
+        <div class="row row-cols-2 row-cols-md-4 g-3">
+            <div class="highlight-box"><span class="important-title">Тип:</span> {{ real_estate.get_type_display }}
+            </div>
+            <div class="highlight-box"><span class="important-title">Площадь:</span> {{ real_estate.area }} м²</div>
+            <div class="highlight-box"><span class="important-title">Комнат:</span> {{ real_estate.rooms }}</div>
+            <div class="highlight-box"><span class="important-title">Этаж:</span> {{ real_estate.floor }}/{{ real_estate.total_floors }}
+            </div>
+            <div class="highlight-box"><span class="important-title">Состояние:</span> {{ real_estate.get_condition_display }}
+            </div>
+            <div class="highlight-box"><span class="important-title">Кадастр:</span> {{ real_estate.cadastral|yesno:"Да,Нет" }}
+            </div>
+            <div class="highlight-box"><span class="important-title">Балкон:</span> {{real_estate.has_balcony|yesno:"Да,Нет" }}
+            </div>
+            <div class="highlight-box"><span class="important-title">Ипотека:</span> {{ real_estate.mortgage_available|yesno:"Да,Нет" }}
+            </div>
+            <div class="highlight-box"><span class="important-title">С мебелью:</span> {{ real_estate.furniture|yesno:"Да,Нет" }}
+            </div>
+            <div class="highlight-box"><span class="important-title">С техникой:</span> {{ real_estate.appliances|yesno:"Да,Нет" }}</div>
+        </div>
+    </div>
+
+
+    <!-- Address and Orientation -->
+    <div class="card p-4 shadow-sm mb-4">
+        <h5 class="mb-3">Расположение и инфраструктура</h5>
+        <p><strong>Адрес:</strong> {{ real_estate.address }}</p>
+        <p><strong>Ориентир:</strong> {{ real_estate.orientir }}</p>
+         <!-- GLightbox JS -->
+        <div id="map" style="width: 100%; height: 400px;"></div>
+    </div>
+
+    <!-- Video Section -->
+    <div class="card p-4 shadow-sm mb-4">
+        <h5 class="mb-3">Инстаграм застройщика</h5>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+            {% if real_estate.video %}
+            <div class="col video-box">
+                <div class="ratio ratio-16x9">
+                    <video class="w-100" controls>
+                        <source src="{{ real_estate.video.url }}" type="video/mp4">
+                        Ваш браузер не поддерживает видео.
+                    </video>
+                </div>
+            </div>
+            {% else %}
+            <p class="text-muted">Видео пока нет.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Similar Listings (Modern Card Design) -->
+    <div class="card p-4 shadow-sm mb-4">
+        <h5 class="mb-4">Похожие объявления</h5>
+        <div class="row g-4">
+
+            {% for listing in similar_listings %}
+            <div class="col-12 col-md-6 col-lg-3 d-flex">
+                <div class="card flex-fill h-100">
+                    {% if listing.images.first %}
+                    <a href="{% url 'real_estate_detail' listing.id %}">
+                        <img class="card-img-top" src="{{ listing.images.first.image.url }}"
+                             style="height:180px; object-fit:cover; border-radius:12px 12px 0 0;">
+                    </a>
+                    {% endif %}
+                    <div class="card-body d-flex flex-column">
+                        <h6 class="card-title mb-2">{{ listing.title|truncatechars:25 }}</h6>
+                        <p class="card-text mb-1"><strong>Площадь:</strong> {{ listing.area }} м²</p>
+                        <p class="card-text mb-2"><strong>Цена:</strong> {{ listing.price_usd|floatformat:0|intcomma }}
+                            $</p>
+                        <a class="btn btn-outline-primary mt-auto" href="{% url 'real_estate_detail' listing.id %}">Подробнее</a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-muted">Похожие объявления пока отсутствуют.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Baholash bo‘limi -->
+    <div class="card p-4 shadow-sm mb-4">
+  <h5 class="mb-3">Общая оценка</h5>
+  <!-- O'rtacha baho ko'rsatish -->
+  <p>
+    <strong>Средний рейтинг:</strong>
+    {% for i in "12345" %}
+      {% if forloop.counter <= avg_rating %}
+        <i class="bi bi-star-fill text-warning"></i>
+      {% else %}
+        <i class="bi bi-star text-secondary"></i>
+      {% endif %}
+    {% endfor %}
+    ({{ avg_rating|floatformat:1 }})
+  </p>
+
+  <hr>
+  <h6>Ваша оценка:</h6>
+  <div id="rating-stars" class="mb-3">
+    {% for i in "12345" %}
+      <i class="bi bi-star fs-3 text-secondary star"
+         data-value="{{ forloop.counter }}"></i>
+    {% endfor %}
+  </div>
+
+  <form method="post" action="{% url 'rate_real_estate' real_estate.id %}">
+    {% csrf_token %}
+    <input type="hidden" name="rating" id="ratingInput">
+
+    {% if not request.user.is_authenticated %}
+      <div class="mb-2">
+        <input type="text" name="name" class="form-control"
+               placeholder="Ваше имя (необязательно)">
+      </div>
+    {% endif %}
+
+    <button type="submit" class="btn btn-sm btn-primary">Оценить</button>
+  </form>
+</div>
+
+
+
+   <!-- Kommentariyalar bo‘limi -->
+    <div class="card border-0 shadow-sm rounded-3 p-4 mt-4">
+      <h5 class="fw-bold mb-3">Оставить комментарий</h5>
+
+      <!-- Izoh qoldirish formasi -->
+      <form method="post" action="{% url 'add_comment' real_estate.id %}" class="mb-4">
+        {% csrf_token %}
+        {% if not request.user.is_authenticated %}
+          <div class="mb-2">
+            <input type="text" name="name" class="form-control"
+                   placeholder="Ваше имя (необязательно)">
+          </div>
+        {% endif %}
+        <div class="mb-2">
+          <textarea name="text" rows="3" class="form-control"
+                    placeholder="Оставьте комментарий..." required></textarea>
+        </div>
+        <button type="submit" class="btn btn-sm btn-primary">Отправить</button>
+      </form>
+
+    <!-- Chiqarilgan izohlar -->
+      <div id="commentsWrapper">
+        {% for comment in real_estate.comments.all %}
+          <div class="comment-item {% if forloop.counter > 3 %}d-none{% endif %}">
+            <div class="card border-0 shadow-sm rounded-3 p-3 mb-3">
+              <div class="d-flex align-items-start">
+                <!-- Avatar -->
+                <div class="flex-shrink-0">
+                  <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+                       style="width:40px; height:40px; font-size:14px;">
+                    {{ comment.name|default:"A"|slice:":1"|upper }}
+                  </div>
+                </div>
+
+                <!-- Izoh matni -->
+                <div class="ms-3 flex-grow-1">
+                  <div class="d-flex justify-content-between">
+                    <small class="fw-semibold">
+                      {{ comment.name|default:"Анонимный пользователь" }}
+                    </small>
+                    <small class="text-muted">{{ comment.created_at|date:"d.m.Y H:i" }}</small>
+                  </div>
+                  <p class="mb-0 mt-1">{{ comment.text }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% empty %}
+          <p class="text-muted">Комментариев нет. Будьте первым, кто оставит комментарий</p>
+        {% endfor %}
+      </div>
+
+      <!-- Ko‘proq ko‘rsatish tugmasi -->
+      {% if real_estate.comments.count > 3 %}
+        <div class="text-center mt-2">
+          <button id="showMoreBtn" class="btn btn-outline-primary btn-sm">Показать больше</button>
+        </div>
+      {% endif %}
+    </div>
+
+
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+          const btn = document.getElementById("showMoreBtn");
+          if (btn) {
+                btn.addEventListener("click", function () {
+                  document.querySelectorAll(".comment-item.d-none").forEach(el => el.classList.remove("d-none"));
+                  btn.style.display = "none";
+                });
+              }
+            });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
+    <script>
+            const lightbox = GLightbox({
+              selector: '.glightbox',
+              touchNavigation: true,
+              loop: true,
+              zoomable: true,
+            });
+        </script>
+        <!-- Yandex Map API -->
+    <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey=3e0c91bd-d2cb-4581-9294-6ce44e90b5f3" type="text/javascript"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const stars = document.querySelectorAll("#rating-stars .star");
+        const input = document.getElementById("ratingInput");
+
+        stars.forEach(star => {
+          star.addEventListener("mouseover", function () {
+            let val = this.dataset.value;
+            stars.forEach(s => {
+              if (s.dataset.value <= val) {
+                s.classList.remove("bi-star");
+                s.classList.add("bi-star-fill", "text-warning");
+              } else {
+                s.classList.remove("bi-star-fill", "text-warning");
+                s.classList.add("bi-star");
+              }
+            });
+          });
+
+          star.addEventListener("click", function () {
+            input.value = this.dataset.value;
+          });
+        });
+      });
+    </script>
+    <script>
+            document.addEventListener('DOMContentLoaded', function () {
+              const carousel = document.getElementById('imageCarousel');
+              const counter = document.getElementById('image-counter');
+              const total = {{ real_estate.images.count }};
+              let currentIndex = 1;
+
+              carousel.addEventListener('slid.bs.carousel', function (event) {
+                currentIndex = event.to + 1;
+                counter.textContent = `${currentIndex} / ${total}`;
+              });
+            });
+    </script>
+    <script>
+            ymaps.ready(function () {
+                var myMap = new ymaps.Map("map", {
+                    center: [55.751574, 37.573856], // default: Moscow
+                    zoom: 15
+                });
+
+                var geocoder = ymaps.geocode("{{ real_estate.address|escapejs }}");  // manzilni serverdan olish
+
+                geocoder.then(
+                    function (res) {
+                        var coordinates = res.geoObjects.get(0).geometry.getCoordinates();
+                        var placemark = new ymaps.Placemark(coordinates, {
+                            balloonContent: "{{ real_estate.address|escapejs }}"
+                        });
+                        myMap.geoObjects.add(placemark);
+                        myMap.setCenter(coordinates);
+                    },
+                    function (err) {
+                        alert("Manzil aniqlanmadi: " + err.message);
+                    }
+                );
+            });
+    </script>
+</div>
+{% endblock %}

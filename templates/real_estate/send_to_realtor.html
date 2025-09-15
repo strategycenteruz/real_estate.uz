@@ -1,0 +1,131 @@
+{% load static %}
+
+{% load static %}
+
+<style>
+  .realtor-section {
+    background: linear-gradient(135deg, #f8f9fa, #e9f5ff);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    margin: 40px 0;
+    transition: transform .3s ease;
+  }
+  .realtor-section:hover {
+    transform: translateY(-3px);
+  }
+  .realtor-avatar {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #0d6efd;
+  }
+  .btn-realtor {
+    background: #0d6efd;
+    color: #fff;
+    border-radius: 30px;
+    padding: 12px 28px;
+    font-weight: 600;
+    transition: 0.3s;
+  }
+  .btn-realtor:hover {
+    background: #0b5ed7;
+    color: #fff;
+    transform: scale(1.05);
+  }
+</style>
+
+<div class="realtor-section d-flex flex-column flex-md-row align-items-center justify-content-between">
+  <div class="d-flex align-items-center gap-3 mb-3 mb-md-0">
+    <img src="{% static 'img/realtor.jpg' %}" class="realtor-avatar" alt="Realtor">
+    <div>
+      <h4 class="fw-bold mb-1">🏡 Воспользоваться услугами профессионального риэлтора</h4>
+      <p class="text-muted mb-0">Оставьте заявку и наш специалист свяжется с вами в ближайшее время</p>
+    </div>
+  </div>
+  <button class="btn btn-realtor" data-bs-toggle="modal" data-bs-target="#realtorModal">
+    ✍️ Оставить заявку
+  </button>
+</div>
+
+<!-- Modal форма -->
+<div class="modal fade" id="realtorModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg rounded-4">
+      <div class="modal-header border-0">
+        <h5 class="modal-title">Заявка риэлтору</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="realtorForm" method="post">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Ваше имя</label>
+            <input type="text" name="name" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Телефон</label>
+            <input type="tel" name="phone" class="form-control" required placeholder="+998 90 123 45 67">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Тип недвижимости</label>
+            <select name="property_type" class="form-select" required>
+              <option value="">Выберите...</option>
+              <option value="Квартира">Квартира</option>
+              <option value="Дом">Дом</option>
+              <option value="Участок">Участок</option>
+              <option value="Коммерческая недвижимость">Коммерческая недвижимость</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Дополнительная информация</label>
+            <textarea name="details" class="form-control" rows="3"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="submit" class="btn btn-realtor w-100">🚀 Отправить заявку</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1055">
+  <div id="toastRealtor" class="toast align-items-center text-white bg-success border-0" role="alert">
+    <div class="d-flex">
+      <div class="toast-body">✅ Ваша заявка успешно отправлена! Наш риэлтор скоро свяжется с вами.</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById("realtorForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    const form = e.target;
+    const fd = new FormData(form);
+
+    fetch("{% url 'send_to_realtor' %}", {
+      method: "POST",
+      body: fd,
+      headers: {"X-Requested-With": "XMLHttpRequest"}
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success){
+        form.reset();
+        bootstrap.Modal.getInstance(document.getElementById("realtorModal")).hide();
+        new bootstrap.Toast(document.getElementById("toastRealtor")).show();
+      } else {
+        alert("Ошибка: " + (data.error || "Попробуйте снова."));
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Серверная ошибка.");
+    });
+  });
+</script>
+

@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Объявления о недвижимости{% endblock %}
+{% block content %}
+
+
+<div class="row mb-4">
+
+  {% if realestate.video %}
+  <video src="{{ realestate.video.url }}" controls muted style="width:100%; height:auto;"></video>
+{% endif %}
+
+
+  <div class="col-md-12">
+    <form method="get" class="row g-2 align-items-end">
+  <div class="col-md-3 col-6">
+    <input type="text" name="q" value="{{ request.GET.q }}" class="form-control" placeholder="Адрес или ориентир">
+  </div>
+
+  <div class="col-md-2 col-6">
+    <select name="district" class="form-select">
+      <option value="">Район</option>
+      {% for key, name in district_choices %}
+        <option value="{{ key }}" {% if request.GET.district == key %}selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="col-md-2 col-6">
+    <select name="type" class="form-select">
+      <option value="">Тип</option>
+      {% for key, name in type_choices %}
+        <option value="{{ key }}" {% if request.GET.type == key %}selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="col-md-1 col-6">
+    <input type="number" name="rooms" value="{{ request.GET.rooms }}" class="form-control" placeholder="Комн.">
+  </div>
+
+  <div class="col-md-2 col-6">
+    <input type="number" name="min_price" value="{{ request.GET.min_price }}" class="form-control" placeholder="Мин. цена">
+  </div>
+
+  <div class="col-md-2 col-6">
+    <input type="number" name="max_price" value="{{ request.GET.max_price }}" class="form-control" placeholder="Макс. цена">
+  </div>
+
+      <div class="col-md-2 col-6">
+        <select name="status" class="form-select">
+          <option value="">Статус</option>
+          <option value="active" {% if current_status == 'active' %}selected{% endif %}>Срочно</option>
+          <option value="sold" {% if current_status == 'sold' %}selected{% endif %}>Продано</option>
+        </select>
+      </div>
+
+  <div class="col-md-2 col-6 form-check form-switch">
+    <input class="form-check-input" type="checkbox" name="is_urgent" {% if request.GET.is_urgent %}checked{% endif %}>
+    <label class="form-check-label">Срочно</label>
+  </div>
+
+  <div class="col-md-2 col-6 form-check form-switch">
+    <input class="form-check-input" type="checkbox" name="mortgage" {% if request.GET.mortgage %}checked{% endif %}>
+    <label class="form-check-label">Ипотека</label>
+  </div>
+
+  <div class="col-md-2 col-6">
+    <button type="submit" class="btn btn-primary w-100">🔍 Найти</button>
+  </div>
+
+  <div class="col-md-2 col-6">
+    <a href="{% url 'home' %}" class="btn btn-outline-secondary w-100">↺ Сброс фильтра</a>
+  </div>
+</form>
+
+  </div>
+</div>
+
+<div class="row">
+  {% for realestate in realestates %}
+    <div class="col-md-4 mb-4">
+      <div class="card h-100 position-relative shadow">
+        {% if realestate.images.first %}
+          <img src="{{ realestate.images.first.image.url }}" class="card-img-top" alt="Фото" style="height: 220px; object-fit: cover;">
+        {% endif %}
+        <div class="card-body">
+          <h5 class="card-title">{{ realestate.title }}</h5>
+          <p class="card-text">{{ realestate.address }} — {{ realestate.get_district_display }}</p>
+          <p><strong>{{ realestate.price_usd|floatformat:0|intcomma }} $</strong></p>
+
+          <a href="{% url 'realestate_detail' realestate.pk %}" class="btn btn-outline-primary btn-sm">Подробнее</a>
+        </div>
+
+        <!-- ❤️ и счетчик -->
+        {% if realestate.is_favorite %}
+          <div class="position-absolute top-0 end-0 m-2">
+            <span class="badge bg-warning">❤️ В избранном</span>
+          </div>
+        {% endif %}
+
+
+
+        <!-- 🏷️ Срочно -->
+       {% if realestate.status == 'active' %}
+          <div class="position-absolute top-0 start-0 m-2">
+            <span class="badge bg-danger">Срочно</span>
+          </div>
+        {% elif realestate.status == 'sold' %}
+          <div class="position-absolute top-0 start-0 m-2">
+            <span class="badge bg-secondary">Продано</span>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  {% empty %}
+    <p>Объявления не найдены.</p>
+  {% endfor %}
+</div>
+
+<!-- Страницы -->
+<div class="mt-4">
+  <nav>
+    <ul class="pagination justify-content-center">
+      {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}{% if request.GET.district %}district={{ request.GET.district }}&{% endif %}{% if request.GET.type %}type={{ request.GET.type }}&{% endif %}page={{ page_obj.previous_page_number }}">&laquo;</a>
+        </li>
+      {% endif %}
+      {% for num in page_obj.paginator.page_range %}
+        <li class="page-item {% if num == page_obj.number %}active{% endif %}">
+          <a class="page-link" href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}{% if request.GET.district %}district={{ request.GET.district }}&{% endif %}{% if request.GET.type %}type={{ request.GET.type }}&{% endif %}page={{ num }}">{{ num }}</a>
+        </li>
+      {% endfor %}
+      {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}{% if request.GET.district %}district={{ request.GET.district }}&{% endif %}{% if request.GET.type %}type={{ request.GET.type }}&{% endif %}page={{ page_obj.next_page_number }}">&raquo;</a>
+        </li>
+      {% endif %}
+    </ul>
+  </nav>
+</div>
+{% endblock %}

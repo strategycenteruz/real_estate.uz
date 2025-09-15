@@ -1,0 +1,80 @@
+{% load static %}
+{% load humanize %}    <form class="mb-4 p-3 bg-light rounded shadow-sm" method="get">
+        <div class="row g-2">
+            <div class="col-md-3 col-sm-6">
+                <input class="form-control form-control-sm" name="q" placeholder="Поиск..." type="text"
+                       value="{{ request.GET.q }}">
+            </div>
+
+            <div class="col-md-2 col-sm-6">
+                <select class="form-control form-control-sm" name="type">
+                    <option value="">Тип</option>
+                    {% for val, name in type_choices %}
+                    <option %} %}selected{% endif if request.GET.type== val value="{{ val }}" {%>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-2 col-sm-6">
+                <select class="form-control form-control-sm" name="district">
+                    <option value="">Район</option>
+                    {% for val, name in district_choices %}
+                    <option %} %}selected{% endif if request.GET.district== val value="{{ val }}" {%>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-1 col-sm-6">
+                <input class="form-control form-control-sm" name="rooms" placeholder="Комн." type="number"
+                       value="{{ request.GET.rooms }}">
+            </div>
+
+            <div class="col-md-2 col-sm-6">
+                <select class="form-control form-control-sm" name="condition">
+                    <option value="">Сост.</option>
+                    {% for val, name in condition_choices %}
+                    <option %} %}selected{% endif if request.GET.condition== val value="{{ val }}" {%>{{ name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-2 col-sm-6">
+                <select class="form-control form-control-sm" name="status">
+                    <option value="">Статус</option>
+                    {% for val, name in status_choices %}
+                    <option %} %}selected{% endif if request.GET.status== val value="{{ val }}" {%>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-2 col-sm-6">
+                <input class="form-control form-control-sm" name="price" placeholder="До $USD" type="number"
+                       value="{{ request.GET.price }}">
+            </div>
+
+            <div class="col-md-1 col-sm-6 d-flex align-items-center">
+                <div class="form-check">
+                    <input %} %}checked{% class="form-check-input" endif id="mortgageCheck" if
+                           name="mortgage" request.GET.mortgage type="checkbox" {%>
+                    <label class="form-check-label small" for="mortgageCheck">Ипотека</label>
+                </div>
+            </div>
+
+            <div class="col-md-1 col-sm-6">
+                <button class="btn btn-primary btn-sm w-100" type="submit">Найти</button>
+            </div>
+
+            <!-- 🔄 Сброс -->
+            <div class="col-md-1 col-sm-6">
+                <a class="btn btn-secondary btn-sm w-100" href="{% url 'real_estate_list' %}">Сброс</a>
+            </div>
+
+           <!-- 🗺️ Karta tugmasi -->
+            <div class="col-md-2 col-sm-6">
+                <a href="{% url 'real_estate_map' %}" class="btn btn-outline-success btn-sm w-100">
+                    Просмотр по карте
+                </a>
+            </div>
+        </div>
+    </form>

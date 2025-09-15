@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <h3>Интерактивная карта</h3>
+
+    <!-- Filtr -->
+    <form id="filter-form" class="row g-2 mb-3" onsubmit="return false;">
+        <div class="col-md-3">
+            <input type="text" class="form-control" name="q" id="q" placeholder="Поиск...">
+        </div>
+        <div class="col-md-2">
+            <select class="form-control" name="type" id="type">
+                <option value="">Тип</option>
+                {% for val, name in type_choices %}
+                  <option value="{{ val }}">{{ name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select class="form-control" name="district" id="district">
+                <option value="">Район</option>
+                {% for val, name in district_choices %}
+                  <option value="{{ val }}">{{ name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Qo'shimcha filtrlar -->
+        <div class="col-md-2">
+            <input type="number" class="form-control" id="min_price" placeholder="Мин $">
+        </div>
+        <div class="col-md-2">
+            <input type="number" class="form-control" id="max_price" placeholder="Макс $">
+        </div>
+        <div class="col-md-2">
+            <input type="number" class="form-control" id="rooms" placeholder="Комнат">
+        </div>
+        <div class="col-md-2">
+            <input type="number" class="form-control" id="floor" placeholder="Этаж">
+        </div>
+        <div class="col-md-2">
+            <input type="number" class="form-control" id="area" placeholder="Мин м²">
+        </div>
+    </form>
+
+    <div class="row">
+        <!-- Xarita -->
+        <div class="col-md-8">
+            <div id="map" style="height:600px; width:100%;"></div>
+        </div>
+
+        <!-- Yon panel -->
+        <div class="col-md-4">
+            <div id="estate-details" class="border rounded p-3 bg-light" style="height:600px; overflow-y:auto;">
+                <h5>ℹ️ Подробности объявления</h5>
+                <div id="details-list">
+                    <p>Нажмите на маркер, и вы увидите объявления здесь.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+
+<script>
+    var map = L.map('map').setView([41.2995, 69.2401], 12);
+
+    // Xarita ko‘rinishlari
+    var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    });
+    var satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/' +
+        'World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles © Esri' });
+    var light = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OSM &copy; CARTO', subdomains: 'abcd', maxZoom: 19
+    });
+
+    osm.addTo(map);
+    L.control.layers({"Обычный": osm,"Спутник": satellite,"Освещение": light}).addTo(map);
+
+    var markersLayer = L.markerClusterGroup().addTo(map);
+
+    function loadData() {
+        let q = document.getElementById('q').value;
+        let type = document.getElementById('type').value;
+        let district = document.getElementById('district').value;
+        let min_price = document.getElementById('min_price').value;
+        let max_price = document.getElementById('max_price').value;
+        let rooms = document.getElementById('rooms').value;
+        let floor = document.getElementById('floor').value;
+        let area = document.getElementById('area').value;
+
+        fetch(`/api/real-estates/?q=${q}&type=${type}&district=${district}&min_price=${min_price}&max_price=${max_price}&rooms=${rooms}&floor=${floor}&area=${area}`)
+        .then(res => res.json())
+        .then(data => {
+            markersLayer.clearLayers();
+            document.getElementById("details-list").innerHTML = "<p>Нажмите на маркер, и вы увидите подробности объявления здесь.</p>";
+
+            data.forEach(e => {
+                if (e.latitude && e.longitude) {
+                    var customIcon = L.divIcon({
+                        html: e.image ? `<div style="
+                            width:40px; height:40px; border-radius:50%;
+                            background-image:url('${e.image}');
+                            background-size:cover; background-position:center;
+                            border:2px solid #fff; box-shadow:0 0 5px rgba(0,0,0,0.4);
+                        "></div>` : `<div style="
+                            width:40px; height:40px; border-radius:50%;
+                            background:#ccc; display:flex; align-items:center;
+                            justify-content:center; font-size:12px;">🏠</div>`,
+                        className: "",
+                        iconSize: [40, 40],
+                        popupAnchor: [0, -20]
+                    });
+
+                    var marker = L.marker([e.latitude, e.longitude], {icon: customIcon});
+
+                    marker.on("click", function() {
+                        let detailsList = document.getElementById("details-list");
+                        detailsList.innerHTML = `
+                          <div class="card mb-3 shadow-sm">
+                              ${e.image ? `<img src="${e.image}" class="card-img-top" style="height:200px; object-fit:cover;">` : ""}
+                              <div class="card-body">
+                                  <h5 class="card-title">${e.title}</h5>
+                                  <p class="card-text">
+                                      📍 ${e.address}<br>
+                                      📌 Район: ${e.district}<br>
+                                      📐 Площадь: ${e.area} м²<br>
+                                      🚪 Комнат: ${e.rooms}<br>
+                                      💰 Цена: ${e.price_usd} $<br>
+                                  </p>
+                                  <br>
+                                  <a href="/realestate/${e.id}/" class="btn btn-primary">Подробнее</a>
+
+                                  <a href="https://www.google.com/maps?q=${e.latitude},${e.longitude}" target="_blank" class="btn btn-outline-success">Поделиться</a>
+                              </div>
+                          </div>
+                        `;
+                    });
+
+                    markersLayer.addLayer(marker);
+                }
+            });
+        });
+    }
+
+    // Filtrlarni kuzatamiz
+    document.querySelectorAll('#filter-form input, #filter-form select').forEach(el => {
+        el.addEventListener('input', loadData);
+        el.addEventListener('change', loadData);
+    });
+
+    loadData();
+</script>
+
+{% endblock %}

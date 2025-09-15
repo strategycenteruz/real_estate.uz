@@ -1,0 +1,100 @@
+{% load static %}
+{% load humanize %}
+<div class="container mt-3">
+    <h5 class="mb-3">🎬 Последние видео</h5>
+    <div class="swiper mySwiper">
+        <div class="swiper-wrapper">
+            {% for video in reels_videos %}
+            <div class="swiper-slide">
+                <div class="reel-video position-relative">
+
+                    <!-- Video -->
+                    <video autoplay muted playsinline src="{{ video.video.url }}"></video>
+
+                    <!-- Tepada e’lon nomi -->
+                    {% if video.real_estate %}
+                    <a class="reel-title position-absolute top-0 start-0 w-100 text-center text-white fw-bold bg-dark bg-opacity-50 py-1 text-decoration-none"
+                       href="{% url 'real_estate_detail' video.real_estate.id %}">
+                        {{ video.real_estate.title|truncatechars:30 }}
+                    </a>
+                    {% endif %}
+
+                    <!-- Controls -->
+                    <div class="reel-controls">
+                        <button class="mute-btn">🔇</button>
+                    </div>
+
+                </div>
+            </div>
+            {% empty %}
+            <p>Видео недоступно</p>
+            {% endfor %}
+        </div>
+        <div class="swiper-button-prev"></div>
+        <div class="swiper-button-next"></div>
+    </div>
+</div>
+<!-- 🎥 Instagram Reels uslubi -->
+<link href="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.css" rel="stylesheet"/>
+<script>
+    var swiper = new Swiper(".mySwiper", {
+        slidesPerView: 4,
+        spaceBetween: 15,
+        loop: true,
+        autoplay: {
+            delay: 10000,
+            disableOnInteraction: false
+        },
+        navigation: {
+            nextEl: ".swiper-button-next",
+            prevEl: ".swiper-button-prev",
+        },
+        breakpoints: {
+            0: { slidesPerView: 1 },
+            576: { slidesPerView: 2 },
+            992: { slidesPerView: 3 },
+            1200: { slidesPerView: 4 }
+        }
+    });
+
+    function pauseAllVideos() {
+        document.querySelectorAll('.reel-video video').forEach(v => {
+            v.pause();
+        });
+    }
+
+    function playActiveVideo() {
+        let activeSlide = document.querySelector('.swiper-slide-active video');
+        if (activeSlide) {
+            activeSlide.play().catch(err => console.log("Video play error:", err));
+            activeSlide.muted = true;
+            activeSlide.onended = function () {
+                swiper.slideNext();
+            };
+        }
+    }
+
+    // Slayd o‘zgarganda
+    swiper.on('slideChange', function () {
+        pauseAllVideos();
+        setTimeout(playActiveVideo, 300);
+    });
+
+    // Sahifa yuklanganda
+    window.addEventListener('load', function () {
+        playActiveVideo();
+    });
+
+    // Video ustiga bosganda play/pause
+    document.querySelectorAll('.reel-video video').forEach(video => {
+        video.addEventListener('click', function () {
+            if (video.paused) {
+                pauseAllVideos();
+                video.play();
+            } else {
+                video.pause();
+            }
+        });
+    });
+
+</script>

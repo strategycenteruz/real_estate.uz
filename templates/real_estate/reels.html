@@ -1,0 +1,99 @@
+<!-- 🎥 Instagram Reels uslubi -->
+<div class="position-relative reels-container mb-4">
+
+  <!-- Chap tugma -->
+  <button class="reels-btn left" onclick="scrollReels(-1)">
+    <i class="bi bi-chevron-left"></i>
+  </button>
+
+  <!-- Reelslar -->
+  <div id="reelsWrapper" class="d-flex overflow-hidden gap-3">
+    {% for item in reels_videos %}
+      <div class="flex-shrink-0" style="width: 250px;">
+        <video controls loop muted
+               style="width: 100%; height: 450px; object-fit: cover; border-radius: 12px;">
+          <source src="{{ item.video.url }}" type="video/mp4">
+          Brauzeringiz video qo‘llab-quvvatlamaydi.
+        </video>
+      </div>
+    {% empty %}
+      <p class="text-muted">🎬 Video mavjud emas</p>
+    {% endfor %}
+  </div>
+
+  <!-- O‘ng tugma -->
+  <button class="reels-btn right" onclick="scrollReels(1)">
+    <i class="bi bi-chevron-right"></i>
+  </button>
+</div>
+
+<style>
+  .reels-container {
+    position: relative;
+  }
+  .reels-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255,255,255,0.8);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .reels-btn.left { left: -20px; }
+  .reels-btn.right { right: -20px; }
+  .reels-btn:hover {
+    background: rgba(255,255,255,1);
+    box-shadow: 0 0 8px rgba(0,0,0,0.2);
+  }
+  #reelsWrapper {
+    scroll-behavior: smooth;
+    overflow-x: auto;
+    scrollbar-width: none; /* Firefox */
+  }
+  #reelsWrapper::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
+  }
+</style>
+
+<script>
+  const wrapper = document.getElementById('reelsWrapper');
+  let autoScrollInterval;
+
+  function scrollReels(direction) {
+    const scrollAmount = 270; // 250px video + 20px gap
+    wrapper.scrollBy({
+      left: direction * scrollAmount,
+      behavior: 'smooth'
+    });
+  }
+
+  function startAutoScroll() {
+    autoScrollInterval = setInterval(() => {
+      // Agar oxiriga yetgan bo‘lsa, boshiga qaytadi
+      if (wrapper.scrollLeft + wrapper.clientWidth >= wrapper.scrollWidth - 5) {
+        wrapper.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        scrollReels(1);
+      }
+    }, 4000); // 4 sekundda bir o‘tadi
+  }
+
+  function stopAutoScroll() {
+    clearInterval(autoScrollInterval);
+  }
+
+  // Hover bo‘lganda to‘xtatish
+  wrapper.addEventListener('mouseenter', stopAutoScroll);
+  wrapper.addEventListener('mouseleave', startAutoScroll);
+
+  // Avtomatik ishga tushirish
+  startAutoScroll();
+</script>

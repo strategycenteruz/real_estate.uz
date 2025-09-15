@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Мой профиль{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <!-- Statistikalar bloklari -->
+  <div class="row g-3 mb-4 text-center">
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 p-3 rounded-3">
+        <h6 class="text-muted">Всего объявлений</h6>
+        <h3 class="text-primary fw-bold">{{ my_ads.count }}</h3>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 p-3 rounded-3">
+        <h6 class="text-muted">Избранное</h6>
+        <h3 class="text-success fw-bold">{{ favorite_ads.count }}</h3>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 p-3 rounded-3">
+        <h6 class="text-muted">Комментарии</h6>
+        <h3 class="text-warning fw-bold">
+          {% if ads_with_stats %}
+            {{ ads_with_stats|length }}
+          {% else %}
+            0
+          {% endif %}
+        </h3>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 p-3 rounded-3">
+        <h6 class="text-muted">Общий рейтинг</h6>
+        <h3 class="text-danger fw-bold">
+          {% if ads_with_stats %}
+            {{ ads_with_stats.0.avg_rating|default:"0"|floatformat:1 }}/5
+          {% else %}
+            0/5
+          {% endif %}
+        </h3>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistikaga link -->
+  <div class="mb-4">
+    <a href="{% url 'statistics' %}" class="btn btn-primary">📈 Подробная статистика</a>
+  </div>
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs" id="profileTabs" role="tablist">
+    <li class="nav-item">
+      <a class="nav-link active" data-bs-toggle="tab" href="#ads">📋 Мои объявления</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-bs-toggle="tab" href="#favorites">⭐ Избранное</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-bs-toggle="tab" href="#comments">💬 Комментарии</a>
+    </li>
+  </ul>
+
+  <div class="tab-content mt-4">
+    <!-- 📋 Мои объявления -->
+    <div class="tab-pane fade show active" id="ads">
+      {% if my_ads %}
+        <div class="row g-4">
+          {% for ad in my_ads %}
+          <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm rounded-3">
+              {% if ad.images.first %}
+                <img src="{{ ad.images.first.image.url }}" class="card-img-top rounded-top" style="height:200px; object-fit:cover;">
+              {% else %}
+                <img src="{% static 'img/no-image.png' %}" class="card-img-top rounded-top" style="height:200px; object-fit:cover;">
+              {% endif %}
+              <div class="card-body">
+                <h6 class="card-title mb-1">
+                  <a href="{% url 'real_estate_detail' ad.pk %}" class="stretched-link text-decoration-none fw-semibold">{{ ad.title }}</a>
+                </h6>
+                <p class="card-text text-muted small mb-1">{{ ad.address }}</p>
+                <p class="fw-bold text-primary">{{ ad.price_usd }} $</p>
+                <div class="progress mt-2" style="height: 6px;">
+                  <div class="progress-bar bg-info" role="progressbar"
+                       style="width: {{ ad.views|default:0|divisibleby:100 }}%"
+                       aria-valuenow="{{ ad.views|default:0 }}" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <small class="text-muted">{{ ad.views|default:0 }} просмотров</small>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-muted">У вас пока нет объявлений.</p>
+      {% endif %}
+    </div>
+
+    <!-- ⭐ Избранное -->
+    <div class="tab-pane fade" id="favorites">
+      {% if favorite_ads %}
+        <div class="row g-4">
+          {% for ad in favorite_ads %}
+          <div class="col-md-4">
+            <div class="card h-100 border border-primary shadow-sm rounded-3">
+              {% if ad.images.first %}
+                <img src="{{ ad.images.first.image.url }}" class="card-img-top rounded-top" style="height:200px; object-fit:cover;">
+              {% else %}
+                <img src="{% static 'img/no-image.png' %}" class="card-img-top rounded-top" style="height:200px; object-fit:cover;">
+              {% endif %}
+              <div class="card-body">
+                <h6 class="card-title mb-1">
+                  <a href="{% url 'real_estate_detail' ad.pk %}" class="stretched-link text-decoration-none fw-semibold">⭐ {{ ad.title }}</a>
+                </h6>
+                <p class="card-text text-muted small mb-1">{{ ad.address }}</p>
+                <p class="fw-bold text-success">{{ ad.price_usd }} $</p>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-muted">Вы пока не добавили объявления в избранное.</p>
+      {% endif %}
+    </div>
+
+    <!-- 💬 Комментарии -->
+    <div class="tab-pane fade" id="comments">
+      {% if ads_with_stats %}
+        <div class="row g-4">
+          {% for ad in ads_with_stats %}
+          <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-3 h-100">
+              <div class="card-body">
+                <h6 class="card-title fw-semibold">{{ ad.title }}</h6>
+                <p class="card-text">
+                  ⭐ {{ ad.avg_rating|default:"0"|floatformat:1 }}/5<br>
+                  💬 Комментарии: {{ ad.comments_count }}
+                </p>
+                <a href="{% url 'real_estate_detail' ad.pk %}" class="btn btn-sm btn-outline-primary">Подробнее</a>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-muted">Вы пока не оставили комментариев или оценок.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const ctx = document.getElementById('adsChart').getContext('2d');
+  const adsChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн'],
+      datasets: [{
+        label: 'Объявления',
+        data: [3, 5, 2, 6, 8, 4], // TODO: backenddan dinamik chiqarish
+        borderColor: '#0d6efd',
+        backgroundColor: 'rgba(13, 110, 253, 0.2)',
+        fill: true,
+        tension: 0.3
+      }]
+    }
+  });
+</script>
+{% endblock %}

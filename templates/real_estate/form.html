@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+{% block content %}
+<html lang="ru">
+<meta charset="UTF-8">
+<title>Добавить объявление</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey=ВАШ_API_КЛЮЧ" type="text/javascript"></script>
+
+<div class="container py-4">
+  <h3 class="mb-4">Добавить новое объявление</h3>
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <div class="row g-3">
+      <!-- Chap ustun -->
+      <div class="col-lg-8">
+        <div class="row g-3">
+          <div class="col-md-6">{{ form.title.label_tag }} {{ form.title }}</div>
+          <div class="col-md-6">{{ form.type.label_tag }} {{ form.type }}</div>
+          <div class="col-md-6">{{ form.district.label_tag }} {{ form.district }}</div>
+          <div class="col-md-6">{{ form.status.label_tag }} {{ form.status }}</div>
+          <div class="col-12">{{ form.address.label_tag }} {{ form.address }}</div>
+          <!-- Yashirin maydonlar -->
+          <input type="hidden" id="id_latitude" name="latitude">
+          <input type="hidden" id="id_longitude" name="longitude">
+          <div class="col-12">
+            <div id="map" style="height: 250px; border-radius: 8px;"></div>
+          </div>
+          <div class="col-12">{{ form.orientir.label_tag }} {{ form.orientir }}</div>
+          <div class="col-md-4">{{ form.rooms.label_tag }} {{ form.rooms }}</div>
+          <div class="col-md-4">{{ form.floor.label_tag }} {{ form.floor }}</div>
+          <div class="col-md-4">{{ form.total_floors.label_tag }} {{ form.total_floors }}</div>
+          <div class="col-md-6">{{ form.area.label_tag }} {{ form.area }}</div>
+          <div class="col-md-6">{{ form.condition.label_tag }} {{ form.condition }}</div>
+          <div class="col-md-6">{{ form.price_usd.label_tag }} {{ form.price_usd }}</div>
+          <div class="col-md-6">{{ form.phone.label_tag }} {{ form.phone }}</div>
+          <div class="col-md-6">{{ form.telegram.label_tag }} {{ form.telegram }}</div>
+          <div class="col-12">{{ form.description.label_tag }} {{ form.description }}</div>
+          <div class="col-12">{{ form.video.label_tag }} {{ form.video }}</div>
+          <div class="col-12">
+            <label>Фотографии (до 10)</label>
+            <input type="file" name="images" accept="image/*" multiple class="form-control form-control-sm">
+          </div>
+        </div>
+      </div>
+
+      <!-- O‘ng ustun -->
+      <div class="col-lg-4">
+        <div class="card p-3 shadow-sm">
+          <h6 class="mb-3">Дополнительно</h6>
+          <div class="form-check small">{{ form.has_balcony }} {{ form.has_balcony.label_tag }}</div>
+          <div class="mb-2">{{ form.balcony_size.label_tag }} {{ form.balcony_size }}</div>
+          <div class="form-check small">{{ form.has_terrace }} {{ form.has_terrace.label_tag }}</div>
+          <div class="form-check small">{{ form.cadastral }} {{ form.cadastral.label_tag }}</div>
+          <div class="form-check small">{{ form.furniture }} {{ form.furniture.label_tag }}</div>
+          <div class="form-check small">{{ form.appliances }} {{ form.appliances.label_tag }}</div>
+          <div class="form-check small">{{ form.mortgage_available }} {{ form.mortgage_available.label_tag }}</div>
+          <div class="form-check small">{{ form.is_approved }} {{ form.is_approved.label_tag }}</div>
+          <div class="form-check small">{{ form.is_favorite }} {{ form.is_favorite.label_tag }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-3">
+      <button type="submit" class="btn btn-success btn-sm px-4">Сохранить</button>
+    </div>
+  </form>
+</div>
+
+<style>
+  .form-control, .form-check-input {
+    border-radius: 6px;
+    font-size: 0.875rem;
+    padding: 0.35rem 0.5rem;
+  }
+  label {
+    font-weight: 500;
+    font-size: 0.85rem;
+  }
+  .form-check.small label {
+    font-size: 0.8rem;
+  }
+</style>
+<script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey=3e0c91bd-d2cb-4581-9294-6ce44e90b5f3" type="text/javascript"></script>
+<script>
+ymaps.ready(init);
+
+function init() {
+    var myMap = new ymaps.Map("map", {
+        center: [41.311081, 69.240562], // Toshkent
+        zoom: 11, // ⚡ bu yerda vergul kerak edi!
+        restrictMapArea: [
+            [41.1, 68.9],  // janubiy-g‘arbiy burchak (lat, lon)
+            [41.5, 69.5]   // shimoliy-sharqiy burchak (lat, lon)
+        ]
+    });
+
+    var placemark;
+
+    // Funksiya: marker qo‘yish
+    function setPlacemark(coords) {
+        if (placemark) {
+            placemark.geometry.setCoordinates(coords);
+        } else {
+            placemark = new ymaps.Placemark(coords, {}, {preset: 'islands#redDotIcon'});
+            myMap.geoObjects.add(placemark);
+        }
+        document.getElementById("id_latitude").value = coords[0];
+        document.getElementById("id_longitude").value = coords[1];
+    }
+
+    // Xaritada bosilganda marker qo‘yish
+    myMap.events.add('click', function (e) {
+        var coords = e.get('coords');
+        setPlacemark(coords);
+    });
+
+    // Manzil inputini kuzatamiz
+    var addressInput = document.getElementById("id_address");
+    addressInput.addEventListener("change", function() {
+        var address = addressInput.value;
+        if (address.length > 3) {
+            ymaps.geocode(address, {
+                results: 1,
+                boundedBy: [[41.1, 68.9], [41.5, 69.5]], // Toshkent hududi
+                strictBounds: true
+            }).then(function (res) {
+                var firstGeoObject = res.geoObjects.get(0);
+                if (firstGeoObject) {
+                    var coords = firstGeoObject.geometry.getCoordinates();
+                    myMap.setCenter(coords, 15);
+                    setPlacemark(coords);
+                }
+            });
+        }
+    });
+}
+
+</script>
+
+
+<!--<script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey=3e0c91bd-d2cb-4581-9294-6ce44e90b5f3" type="text/javascript"></script>
+<script>
+  ymaps.ready(init);
+  let myMap, myPlacemark;
+
+  function init() {
+    myMap = new ymaps.Map("map", {
+      center: [41.311081, 69.240562],
+      zoom: 12
+    });
+
+    function placeMarker(coords) {
+      if (myPlacemark) {
+        myPlacemark.geometry.setCoordinates(coords);
+      } else {
+        myPlacemark = new ymaps.Placemark(coords, {}, { draggable: true });
+        myMap.geoObjects.add(myPlacemark);
+        myPlacemark.events.add("dragend", function () {
+          let newCoords = myPlacemark.geometry.getCoordinates();
+          getAddressFromCoords(newCoords);
+        });
+      }
+      getAddressFromCoords(coords);
+    }
+
+    document.getElementById('id_address').addEventListener('blur', function () {
+      let address = this.value;
+      if (address) {
+        ymaps.geocode(address).then(function (res) {
+          let coords = res.geoObjects.get(0).geometry.getCoordinates();
+          placeMarker(coords);
+          myMap.setCenter(coords, 16);
+        });
+      }
+    });
+
+    myMap.events.add('click', function (e) {
+      let coords = e.get('coords');
+      placeMarker(coords);
+    });
+
+    function getAddressFromCoords(coords) {
+      ymaps.geocode(coords).then(function (res) {
+        let firstGeoObject = res.geoObjects.get(0);
+        if (firstGeoObject) {
+          document.getElementById('id_address').value = firstGeoObject.getAddressLine();
+        }
+      });
+    }
+  }
+</script>-->
+{% endblock %}

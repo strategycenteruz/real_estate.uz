@@ -1,0 +1,27 @@
+{% load static %}
+
+<!-- AOS kutubxonasi -->
+<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+<div class="category-tiles">
+  {% for category in categories %}
+  <div class="category-tile" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:1 }}00">
+    <a href="{{ category.url }}">
+      <div class="category-info">
+        <div class="category-title">{{ category.label }}</div>
+        <div class="category-count">{{ category.count }}</div>
+      </div>
+      <img src="{% static category.icon %}" alt="{{ category.label }}" class="category-icon">
+    </a>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- AOS JS -->
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+  AOS.init({
+    duration: 800,  // animatsiya davomiyligi
+    once: true      // faqat bir marta animatsiya bo‘lishi
+  });
+</script>

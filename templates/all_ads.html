@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Все объявления{% endblock %}
+{% load humanize %}
+
+{% block content %}
+<h3 class="mb-4">📋 Все объявления</h3>
+
+<table class="table table-bordered table-striped align-middle">
+  <thead class="table-light">
+    <tr>
+      <th>№</th>
+      <th>Фото</th>
+      <th>Название</th>
+      <th>Адрес</th>
+      <th>Статус</th>
+      <th>Цена</th>
+      <th>Дата</th>
+      <th>Действия</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for realestate in realestates %}
+    <tr>
+      <td>{{ forloop.counter }}</td>
+      <td>
+        {% if realestate.images.first %}
+        <img src="{{ realestate.images.first.image.url }}" style="height: 60px; width: 80px; object-fit: cover;" class="rounded">
+        {% endif %}
+      </td>
+      <td>{{ realestate.title }}</td>
+      <td>{{ realestate.location }}</td>
+
+       <td>
+          <span class="badge {% if realestate.status == 'active' %}bg-danger{% else %}bg-secondary{% endif %}">
+            {% if realestate.status == 'active' %}Срочно{% else %}Продано{% endif %}
+          </span>
+        </td>
+      <td>{{ realestate.price_usd|floatformat:0|intcomma }} $</td>
+      <td>{{ realestate.created_at|date:"d.m.Y" }}</td>
+      <td>
+        <a href="{% url 'real_estate_update' realestate.pk %}" class="btn btn-sm btn-outline-primary">✏️</a>
+        <a href="{% url 'real_estate_delete' realestate.pk %}" class="btn btn-sm btn-outline-danger">🗑️</a>
+
+      </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="8" class="text-center">Объявлений нет.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}

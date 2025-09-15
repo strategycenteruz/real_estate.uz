@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+  <div class="alert alert-danger shadow-sm">
+    <h4>Вы уверены, что хотите удалить это объявление?</h4>
+    <p><strong>{{ realestate.title }}</strong></p>
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">🗑 Удалить</button>
+      <a href="{% url 'all_ads' %}" class="btn btn-secondary">⬅️ Назад</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

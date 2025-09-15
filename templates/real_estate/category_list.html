@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block content %}
+<div class="container my-5">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <a href="javascript:history.back()" class="btn btn-sm btn-outline-secondary me-2">
+                ⬅️ Назад
+            </a>
+            <h3 class="fw-bold d-inline">{{ category_label }}</h3>
+        </div>
+        <span class="text-muted">{{ properties.paginator.count }} объявлений</span>
+    </div>
+
+    <!-- Grid -->
+    <div class="row g-4">
+        {% for p in properties %}
+        <div class="col-md-4 col-lg-3">
+            <div class="card h-100 border-0 shadow-sm rounded-3 hover-shadow transition">
+
+                <!-- Rasm -->
+                <a href="{% url 'real_estate_detail' p.id %}">
+                    {% if p.images.first %}
+                        <img src="{{ p.images.first.image.url }}"
+                             class="card-img-top rounded-top"
+                             style="height:200px; object-fit:cover;"
+                             alt="{{ p.title }}">
+                    {% else %}
+                        <img src="{% static 'img/no-image.png' %}"
+                             class="card-img-top rounded-top"
+                             style="height:200px; object-fit:cover;"
+                             alt="Нет фото">
+                    {% endif %}
+                </a>
+
+                <!-- Card body -->
+                <div class="card-body d-flex flex-column">
+                    <h6 class="card-title mb-1 text-truncate" title="{{ p.title }}">
+                        {{ p.title }}
+                    </h6>
+                    <p class="mb-1 text-muted small">
+                        📍 {{ p.address|default:"Адрес не указан" }}
+                    </p>
+
+                    <!-- Qulayliklar (misol uchun rooms va area) -->
+                    <div class="mb-2">
+                        {% if p.rooms %}
+                            <span class="badge bg-light text-dark me-1">🛏 {{ p.rooms }} комн.</span>
+                        {% endif %}
+                        {% if p.area %}
+                            <span class="badge bg-light text-dark">📐 {{ p.area }} м²</span>
+                        {% endif %}
+                    </div>
+
+                    <p class="fw-bold text-primary mb-2">
+                        {{ p.price_usd|floatformat:0|intcomma }} $
+                    </p>
+
+                    <div class="mt-auto">
+                        <a href="{% url 'real_estate_detail' p.id %}" class="btn btn-outline-primary btn-sm w-100">
+                            Подробнее
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <p class="text-muted">🚫 Объявлений не найдено.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if properties.has_other_pages %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if properties.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ properties.previous_page_number }}">&laquo;</a>
+                </li>
+            {% endif %}
+
+            {% for num in properties.paginator.page_range %}
+                {% if num == properties.number %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% elif num > properties.number|add:-3 and num < properties.number|add:3 %}
+                    <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                {% endif %}
+            {% endfor %}
+
+            {% if properties.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ properties.next_page_number }}">&raquo;</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+<style>
+    .hover-shadow:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.12) !important;
+        transition: all 0.2s ease-in-out;
+    }
+    .transition {
+        transition: all 0.2s ease-in-out;
+    }
+</style>
+{% endblock %}

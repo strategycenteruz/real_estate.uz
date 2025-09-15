@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% block title %}Редактировать объявление{% endblock %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+  <h3 class="mb-4">✏️ Редактировать объявление</h3>
+
+  <form method="post" enctype="multipart/form-data" class="bg-light p-4 rounded shadow-sm">
+    {% csrf_token %}
+    <div class="row">
+
+      <!-- ⬅️ Chap qism – Ma'lumotlar -->
+      <div class="col-md-6">
+        {{ form.title.label_tag }} {{ form.title }}
+        {{ form.type.label_tag }} {{ form.type }}
+        {{ form.district.label_tag }} {{ form.district }}
+        {{ form.status.label_tag }} {{ form.status }}
+        {{ form.location.label_tag }} {{ form.location }}
+        {{ form.orientir.label_tag }} {{ form.orientir }}
+        {{ form.rooms.label_tag }} {{ form.rooms }}
+        {{ form.floor.label_tag }} {{ form.floor }}
+        {{ form.total_floors.label_tag }} {{ form.total_floors }}
+        {{ form.area.label_tag }} {{ form.area }}
+        {{ form.condition.label_tag }} {{ form.condition }}
+
+        <div class="form-check mt-2">{{ form.has_balcony }} {{ form.has_balcony.label_tag }}</div>
+        {{ form.balcony_size.label_tag }} {{ form.balcony_size }}
+
+        <div class="form-check mt-2">{{ form.has_terrace }} {{ form.has_terrace.label_tag }}</div>
+        <div class="form-check">{{ form.cadastral }} {{ form.cadastral.label_tag }}</div>
+        <div class="form-check">{{ form.furniture }} {{ form.furniture.label_tag }}</div>
+        <div class="form-check">{{ form.appliances }} {{ form.appliances.label_tag }}</div>
+
+        {{ form.price_usd.label_tag }} {{ form.price_usd }}
+        <div class="form-check">{{ form.mortgage_available }} {{ form.mortgage_available.label_tag }}</div>
+        {{ form.description.label_tag }} {{ form.description }}
+        {{ form.phone.label_tag }} {{ form.phone }}
+
+        <div class="form-check">{{ form.is_approved }} {{ form.is_approved.label_tag }}</div>
+        <div class="form-check">{{ form.is_favorite }} {{ form.is_favorite.label_tag }}</div>
+      </div>
+
+      <!-- ➡️ O‘ng qism – Media va Karta -->
+      <div class="col-md-6">
+
+        <!-- Rasmlar -->
+        {% if realestate.images.all %}
+        <label class="mt-2">🖼️ Текущие фото:</label>
+        <div class="row">
+          {% for image in realestate.images.all %}
+          <div class="col-4 mb-2">
+            <img src="{{ image.image.url }}" class="img-thumbnail" alt="Фото">
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        <label class="mt-2">➕ Добавить/заменить фото:</label>
+        <input type="file" name="images" multiple class="form-control">
+
+        <!-- Video -->
+        {% if realestate.video %}
+        <label class="mt-4">🎥 Загруженное видео:</label>
+        <video controls width="100%" height="240" class="mb-2 rounded shadow">
+          <source src="{{ realestate.video.url }}" type="video/mp4">
+          Ваш браузер не поддерживает видео.
+        </video>
+        {% endif %}
+        <label>➕ Заменить видео (до 1 мин):</label>
+        <input type="file" name="video" accept=".mp4,.mov,.avi" class="form-control">
+
+        <!-- Karta -->
+        <input type="hidden" name="latitude" id="id_latitude" value="{{ realestate.latitude }}">
+        <input type="hidden" name="longitude" id="id_longitude" value="{{ realestate.longitude }}">
+
+        <label class="mt-4">📍 Адрес на карте:</label>
+        <input type="text" id="address-input" placeholder="Например: Яккасарай, Нукус" class="form-control mb-2">
+        <div id="yandex-map" style="width: 100%; height: 300px; border: 1px solid #ddd;" class="rounded shadow-sm"></div>
+      </div>
+    </div>
+
+    <div class="mt-4 d-flex gap-2">
+      <button type="submit" class="btn btn-success">💾 Сохранить</button>
+      <a href="{% url 'home' %}" class="btn btn-secondary">⬅️ Назад</a>
+    </div>
+  </form>
+</div>
+
+<!-- Yandex Map JS -->
+<script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey=3e0c91bd-d2cb-4581-9294-6ce44e90b5f3" type="text/javascript"></script>
+<script>
+  ymaps.ready(function () {
+    let lat = parseFloat(document.getElementById("id_latitude").value) || 41.311081;
+    let lon = parseFloat(document.getElementById("id_longitude").value) || 69.240562;
+
+    let myMap = new ymaps.Map("yandex-map", {
+      center: [lat, lon],
+      zoom: 13
+    });
+
+    let myPlacemark = new ymaps.Placemark([lat, lon], {}, { draggable: true });
+    myMap.geoObjects.add(myPlacemark);
+
+    function updateCoords(coords) {
+      document.getElementById("id_latitude").value = coords[0];
+      document.getElementById("id_longitude").value = coords[1];
+    }
+
+    updateCoords([lat, lon]);
+
+    myPlacemark.events.add("dragend", function () {
+      let coords = myPlacemark.geometry.getCoordinates();
+      updateCoords(coords);
+    });
+
+    document.getElementById("address-input").addEventListener("change", function () {
+      let address = this.value;
+      if (!address) return;
+      ymaps.geocode(address).then(function (res) {
+        let coords = res.geoObjects.get(0).geometry.getCoordinates();
+        myPlacemark.geometry.setCoordinates(coords);
+        myMap.setCenter(coords, 15);
+        updateCoords(coords);
+      });
+    });
+  });
+</script>
+{% endblock %}

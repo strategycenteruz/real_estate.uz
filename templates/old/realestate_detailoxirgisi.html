@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+{% load static humanize %}
+{% block content %}
+<div class="container py-4">
+
+  <a href="{% url 'home' %}" class="btn btn-sm btn-outline-dark mb-3">← Назад</a>
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+
+      <div id="carouselImages" class="carousel slide" data-bs-ride="carousel">
+  <div class="carousel-inner">
+    {% for image in realestate.images.all %}
+      <div class="carousel-item {% if forloop.first %}active{% endif %}">
+        <img src="{{ image.image.url }}" class="d-block w-100 lightbox-trigger"
+             alt="Фото {{ forloop.counter }}"
+             data-index="{{ forloop.counter0 }}"
+             data-img="{{ image.image.url }}"
+             style="height: 450px; object-fit: cover; cursor: zoom-in;"
+             data-bs-toggle="modal" data-bs-target="#lightboxModal">
+      </div>
+    {% endfor %}
+  </div>
+  <button class="carousel-control-prev" type="button" data-bs-target="#carouselImages" data-bs-slide="prev">
+    <span class="carousel-control-prev-icon"></span>
+  </button>
+  <button class="carousel-control-next" type="button" data-bs-target="#carouselImages" data-bs-slide="next">
+    <span class="carousel-control-next-icon"></span>
+  </button>
+</div>
+
+
+
+     <!-- 🖼 Lightbox Modal -->
+      <div class="modal fade" id="lightboxModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+          <div class="modal-content bg-dark border-0 position-relative">
+            <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3 z-3"
+                    data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-body p-0 d-flex justify-content-center align-items-center position-relative">
+              <button class="btn btn-light position-absolute start-0 ms-3 z-3" id="prevImage">❮</button>
+              <img id="lightboxImage" src="" class="img-fluid" style="max-height: 90vh; object-fit: contain;">
+              <button class="btn btn-light position-absolute end-0 me-3 z-3" id="nextImage">❯</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 📋 Информация -->
+      <div class="mt-3 d-flex align-items-center justify-content-between">
+        <h4 class="mb-0">{{ realestate.title }}</h4>
+        <span class="badge {% if realestate.status == 'active' %}bg-danger{% else %}bg-secondary{% endif %}">
+          {% if realestate.status == 'active' %}🔥 Срочно{% else %}✅ Продано{% endif %}
+        </span>
+      </div>
+      <h5 class="text-primary mt-2">{{ realestate.price_usd|floatformat:0|intcomma }} $</h5>
+      <p class="text-muted mb-4">{{ realestate.location }}</p>
+
+      <!-- Вкладки -->
+      <ul class="nav nav-tabs mb-3" id="tabContent" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#info">ℹ️ Информация</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" data-bs-toggle="tab" data-bs-target="#desc">📝 Описание</button>
+        </li>
+        {% if realestate.video %}
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" data-bs-toggle="tab" data-bs-target="#video">🎬 Видео</button>
+        </li>
+        {% endif %}
+        {% if realestate.latitude and realestate.longitude %}
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" data-bs-toggle="tab" data-bs-target="#map">🗺 Карта</button>
+        </li>
+        {% endif %}
+      </ul>
+
+      <div class="tab-content">
+        <!-- ℹ️ Info -->
+        <div class="tab-pane fade show active" id="info">
+          <div class="row">
+            <div class="col-md-6">
+              <ul class="list-group list-group-flush">
+                <li class="list-group-item">📍 <strong>Адрес:</strong> {{ realestate.location }}</li>
+                <li class="list-group-item">📐 <strong>Площадь:</strong> {{ realestate.area }} м²</li>
+                <li class="list-group-item">🏢 <strong>Тип:</strong> {{ realestate.get_type_display }}</li>
+                <li class="list-group-item">🧱 <strong>Состояние:</strong> {{ realestate.get_condition_display }}</li>
+                <li class="list-group-item">🛋 <strong>Мебель:</strong> {{ realestate.furniture|yesno:"Есть,Нет" }}</li>
+                <li class="list-group-item">🗓 <strong>Дата добавления:</strong> {{ realestate.created_at|date:"d.m.Y" }}</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <ul class="list-group list-group-flush">
+                <li class="list-group-item">🚪 <strong>Комнаты:</strong> {{ realestate.rooms }}</li>
+                <li class="list-group-item">🧱 <strong>Этаж:</strong> {{ realestate.floor }}/{{ realestate.total_floors }}</li>
+                <li class="list-group-item">📶 <strong>Терраса:</strong> {{ realestate.has_terrace|yesno:"Есть,Нет" }}</li>
+                <li class="list-group-item">🧾 <strong>Кадастр:</strong> {{ realestate.cadastral|yesno:"Есть,Нет" }}</li>
+                <li class="list-group-item">📞 <strong>Телефон:</strong> <a href="tel:{{ realestate.phone }}">{{ realestate.phone }}</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- 📝 Description -->
+        <div class="tab-pane fade" id="desc">
+          <div class="card border-0 mt-3 p-3 bg-light rounded">
+            <p class="text-muted">{{ realestate.description }}</p>
+          </div>
+        </div>
+
+        <!-- 🎬 Video -->
+        {% if realestate.video %}
+        <div class="tab-pane fade" id="video">
+          <div class="mt-3">
+            <video src="{{ realestate.video.url }}" controls muted autoplay loop
+              style="width: 250px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+            </video>
+          </div>
+        </div>
+        {% endif %}
+
+
+         <!-- 🗺 Map Tab -->
+          {% if realestate.latitude and realestate.longitude %}
+         <div class="tab-pane fade" id="map">
+            <div class="mt-3">
+              <h4>📍 На карте</h4>
+              <div id="yandex-map" style="height: 400px; width: 100%; border-radius: 10px; overflow: hidden;"></div>
+
+            </div>
+          </div>
+          {% endif %}
+
+          <li class="list-group-item">📍 <strong>Адрес:</strong> {{ realestate.address }}</li>
+      </div>
+
+      <!-- 🔁 Похожие объявления -->
+      {% if related_realestates %}
+      <div class="mt-5">
+        <h5>🔁 Похожие объявления</h5>
+        <div class="row row-cols-1 row-cols-md-3 g-3">
+          {% for item in related_realestates %}
+          <div class="col">
+            <a href="{% url 'realestate_detail' item.pk %}" class="text-decoration-none text-dark">
+              <div class="card shadow-sm h-100">
+                {% if item.images.first %}
+                <img src="{{ item.images.first.image.url }}" class="card-img-top" style="height: 150px; object-fit: cover;">
+                {% endif %}
+                <div class="card-body">
+                  <h6 class="card-title">{{ item.title }}</h6>
+                  <p class="text-primary fw-bold">{{ item.price_usd|floatformat:0|intcomma }} $</p>
+                  <p class="text-muted small">{{ item.location }}</p>
+                </div>
+              </div>
+            </a>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    <!-- 👉 Kontak panel -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-4 p-4 position-sticky" style="top: 80px;">
+        <h6 class="text-muted mb-3">📞 Контакты</h6>
+        <div class="d-grid gap-2">
+          <a class="btn btn-outline-info" href="tel:{{ realestate.phone }}">📞 Позвонить</a>
+          <a class="btn btn-outline-success" href="https://t.me/share/url?url=tel:{{ realestate.phone|urlencode }}" target="_blank">💬 Telegram</a>
+          <a class="btn btn-outline-danger" href="{% url 'toggle_favorite' realestate.pk %}">
+            {% if realestate.is_favorite %}❤️ В избранном{% else %}🤍 В избранное{% endif %}
+          </a>
+        </div>
+      </div>
+    </div>
+    <!-- 🗺 Map Tab -->
+  </div>
+
+
+</div>
+
+{% if realestate.latitude and realestate.longitude %}
+<script>
+  console.log("Koordinatalar:", {{ realestate.latitude }}, {{ realestate.longitude }});
+</script>
+
+<script src="https://api-maps.yandex.ru/2.1/?apikey=3e0c91bd-d2cb-4581-9294&lang=ru_RU"></script>
+<script>
+  let mapInited = false;
+
+  function initMap() {
+    if (mapInited) return;
+    mapInited = true;
+
+    ymaps.ready(function () {
+      const lat = {{ realestate.latitude }};
+      const lon = {{ realestate.longitude }};
+      const address = "{{ realestate.location|escapejs }}";
+
+      const myMap = new ymaps.Map("yandex-map", {
+        center: [lat, lon],
+        zoom: 16,
+        controls: ['zoomControl', 'fullscreenControl']
+      });
+
+      const myPlacemark = new ymaps.Placemark([lat, lon], {
+        balloonContent: address
+      }, {
+        preset: 'islands#redDotIcon'
+      });
+
+      myMap.geoObjects.add(myPlacemark);
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const mapTabBtn = document.querySelector('[data-bs-target="#map"]');
+
+    if (mapTabBtn) {
+      mapTabBtn.addEventListener("shown.bs.tab", function () {
+        initMap();
+      });
+
+      // Agar sahifa #map bilan ochilgan bo‘lsa
+      if (window.location.hash === "#map") {
+        initMap();
+      }
+    }
+  });
+</script>
+{% endif %}
+
+
+
+{% endblock %}

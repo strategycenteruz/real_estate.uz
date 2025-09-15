@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Добавить объявление{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h3 class="mb-4">➕ Добавить объявление</h3>
+  <form method="post" enctype="multipart/form-data" class="bg-light p-4 rounded shadow">
+    {% csrf_token %}
+    <div class="row">
+      <div class="col-md-6">
+        <!-- Text Fields -->
+        {% for field in form.visible_fields|slice:":11" %}
+          <div class="mb-3">
+            {{ field.label_tag }} {{ field }}
+            {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
+          </div>
+        {% endfor %}
+      </div>
+      <div class="col-md-6">
+        {% for field in form.visible_fields|slice:"11:" %}
+          <div class="mb-3 {% if field.field.widget.input_type == 'checkbox' %}form-check{% endif %}">
+            {{ field }} {{ field.label_tag }}
+            {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
+          </div>
+        {% endfor %}
+
+        <!-- Rasmlar -->
+        <div class="mb-3">
+          <label class="form-label">Фотографии (до 10 штук)</label>
+          <input type="file" name="images" accept="image/*" multiple class="form-control">
+        </div>
+
+        <!-- Video (ixtiyoriy) -->
+        <div class="mb-3">
+          <label class="form-label">Видео (1 минута)</label>
+          <input type="file" name="video" accept="video/*" class="form-control">
+        </div>
+
+        <!-- Hidden coordinates -->
+        <input type="hidden" name="latitude" id="id_latitude" value="{{ form.initial.latitude|default_if_none:'' }}">
+        <input type="hidden" name="longitude" id="id_longitude" value="{{ form.initial.longitude|default_if_none:'' }}">
+
+        <!-- Karta -->
+        <div class="mb-3">
+          <label class="form-label">Выберите местоположение на карте</label>
+          <div id="map" style="width: 100%; height: 400px; border: 1px solid #ddd;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-success">Сохранить</button>
+      <a href="{% url 'home' %}" class="btn btn-secondary">Назад</a>
+    </div>
+  </form>
+</div>
+
+<!-- Yandex Maps -->
+<script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey=3e0c91bd-d2cb-4581-9294-6ce44e90b5f3"></script>
+<script>
+  ymaps.ready(function () {
+    var initCoords = [41.311081, 69.240562];
+    var latInput = document.getElementById('id_latitude');
+    var lonInput = document.getElementById('id_longitude');
+
+    var lat = parseFloat(latInput.value) || initCoords[0];
+    var lon = parseFloat(lonInput.value) || initCoords[1];
+
+    var myMap = new ymaps.Map("map", {
+      center: [lat, lon],
+      zoom: 13,
+      controls: ['zoomControl', 'fullscreenControl']
+    });
+
+    var placemark = new ymaps.Placemark([lat, lon], {}, { draggable: true });
+    myMap.geoObjects.add(placemark);
+
+    function updateCoords(coords) {
+      latInput.value = coords[0];
+      lonInput.value = coords[1];
+    }
+
+    placemark.events.add('dragend', function () {
+      updateCoords(placemark.geometry.getCoordinates());
+    });
+
+    myMap.events.add('click', function (e) {
+      var coords = e.get('coords');
+      placemark.geometry.setCoordinates(coords);
+      updateCoords(coords);
+    });
+  });
+</script>
+{% endblock %}

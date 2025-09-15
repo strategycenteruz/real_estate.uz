@@ -1,0 +1,493 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block content %}
+
+<!-- Bootstrap Icons CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="mb-0">🏠 Объекты недвижимости</h3>
+    </div>
+    <!-- 🔍 Фильтр форма -->
+    <form class="mb-4 p-3 bg-light rounded shadow-sm" method="get">
+        <div class="row g-2">
+            <div class="col-md-3 col-sm-6">
+                <input class="form-control form-control-sm" name="q" placeholder="Поиск..." type="text"
+                       value="{{ request.GET.q }}">
+            </div>
+
+            <div class="col-md-2 col-sm-6">
+                <select class="form-control form-control-sm" name="type">
+                    <option value="">Тип</option>
+                    {% for val, name in type_choices %}
+                    <option %} %}selected{% endif if request.GET.type== val value="{{ val }}" {%>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-2 col-sm-6">
+                <select class="form-control form-control-sm" name="district">
+                    <option value="">Район</option>
+                    {% for val, name in district_choices %}
+                    <option %} %}selected{% endif if request.GET.district== val value="{{ val }}" {%>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-1 col-sm-6">
+                <input class="form-control form-control-sm" name="rooms" placeholder="Комн." type="number"
+                       value="{{ request.GET.rooms }}">
+            </div>
+
+            <div class="col-md-2 col-sm-6">
+                <select class="form-control form-control-sm" name="condition">
+                    <option value="">Сост.</option>
+                    {% for val, name in condition_choices %}
+                    <option %} %}selected{% endif if request.GET.condition== val value="{{ val }}" {%>{{ name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-2 col-sm-6">
+                <select class="form-control form-control-sm" name="status">
+                    <option value="">Статус</option>
+                    {% for val, name in status_choices %}
+                    <option %} %}selected{% endif if request.GET.status== val value="{{ val }}" {%>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-2 col-sm-6">
+                <input class="form-control form-control-sm" name="price" placeholder="До $USD" type="number"
+                       value="{{ request.GET.price }}">
+            </div>
+
+            <div class="col-md-1 col-sm-6 d-flex align-items-center">
+                <div class="form-check">
+                    <input %} %}checked{% class="form-check-input" endif id="mortgageCheck" if
+                           name="mortgage" request.GET.mortgage type="checkbox" {%>
+                    <label class="form-check-label small" for="mortgageCheck">Ипотека</label>
+                </div>
+            </div>
+
+            <div class="col-md-1 col-sm-6">
+                <button class="btn btn-primary btn-sm w-100" type="submit">Найти</button>
+            </div>
+
+            <!-- 🔄 Сброс -->
+            <div class="col-md-1 col-sm-6">
+                <a class="btn btn-secondary btn-sm w-100" href="{% url 'real_estate_list' %}">Сброс</a>
+            </div>
+
+           <!-- 🗺️ Karta tugmasi -->
+            <div class="col-md-2 col-sm-6">
+                <a href="{% url 'real_estate_map' %}" class="btn btn-outline-success btn-sm w-100">
+                    Просмотр по карте
+                </a>
+            </div>
+        </div>
+    </form>
+    {% include 'real_estate/category_bar.html' %}
+    <!-- 📄 Объекты -->
+    {% if properties %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for item in properties %}
+        <div class="col">
+            <a class="text-decoration-none text-dark" href="{% url 'real_estate_detail' item.id %}">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="position-relative">
+
+                        {% if item.images.first %}
+                        <img alt="Фото" class="card-img-top"
+                             src="{{ item.images.first.image.url }}" style="height: 200px; object-fit: cover;">
+                        {% else %}
+                        <img alt="Нет фото" class="card-img-top" src="{% static 'img/no-image.png' %}"
+                             style="height: 200px;">
+                        {% endif %}
+
+                        {% if item.status == 'sold' %}
+                        <span class="badge bg-danger position-absolute top-0 start-0 m-2">
+                        <i class="bi bi-x-circle-fill"></i> Продано
+                        </span>
+                        {% elif item.status == 'active' %}
+                        <span class="badge bg-warning text-dark position-absolute top-0 start-0 m-2">
+                        <i class="bi bi-fire"></i> Срочно
+                        </span>
+                        {% endif %}
+
+                        <!-- O'rtacha reyting -->
+                        <div class="rating-display">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= item.average_rating|default:0 %}
+                                    <i class="bi bi-star-fill text-warning"></i>
+                                {% else %}
+                                    <i class="bi bi-star text-secondary"></i>
+                                {% endif %}
+                            {% endfor %}
+                            ({{ item.average_rating|floatformat:1|default:"0.0" }})
+                        </div>
+
+                    </div>
+
+                    <div class="card-body">
+                        <h5 class="card-title">{{ item.title|default:item.get_type_display }}</h5>
+                        <p class="card-text text-muted mb-1">{{ item.address|truncatechars:40 }}</p>
+                        <p class="card-text text-muted mb-1">{{ item.area }} м²</p>
+                        <p class="card-text fs-5 text-success fw-bold">{{ item.price_usd|intcomma }} $</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    <!-- 📌 Paginator -->
+    {% if properties.has_other_pages %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+
+            {% if properties.has_previous %}
+            <li class="page-item">
+                <a class="page-link"
+                   href="?page={{ properties.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    Предыдущая
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">Предыдущая</span></li>
+            {% endif %}
+
+            {% for num in properties.paginator.page_range %}
+                {% if properties.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% else %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            {{ num }}
+                        </a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if properties.has_next %}
+            <li class="page-item">
+                <a class="page-link"
+                   href="?page={{ properties.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    Следующая
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">Следующая</span></li>
+            {% endif %}
+
+        </ul>
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <div class="alert alert-info">Объявления не найдены.</div>
+    {% endif %}
+    <!-- Популярные объявления -->
+    <div class="container mt-5">
+      <h5 class="mb-4">🔥 Популярные объявления</h5>
+
+      <!-- Swiper slider container -->
+      <div class="swiper popularSwiper">
+        <div class="swiper-wrapper">
+          {% for item in popular_listings %}
+          <div class="swiper-slide">
+            <div class="card h-100 border-0 shadow-sm hover-shadow position-relative">
+
+              {% if item.images.first %}
+              <a href="{% url 'real_estate_detail' item.id %}">
+                <img class="card-img-top" src="{{ item.images.first.image.url }}"
+                     style="height:200px; object-fit:cover; border-radius:12px 12px 0 0;">
+              </a>
+              {% else %}
+              <img class="card-img-top" src="{% static 'img/no-image.png' %}"
+                   style="height:200px; object-fit:cover; border-radius:12px 12px 0 0;">
+              {% endif %}
+
+              <!-- ⭐ Favorite tugma -->
+              <a href="{% url 'toggle_favorite' item.pk %}"
+                 class="position-absolute top-0 end-0 m-2 p-2 rounded-circle shadow
+                        {% if request.user.is_authenticated and item in request.user.favorite_ads.all %}
+                           bg-warning text-white
+                        {% else %}
+                           bg-light text-secondary
+                        {% endif %}"
+                 style="z-index: 10;">
+                {% if request.user.is_authenticated and item in request.user.favorite_ads.all %}
+                  <i class="bi bi-star-fill fs-5"></i>
+                {% else %}
+                  <i class="bi bi-star fs-5"></i>
+                {% endif %}
+              </a>
+
+              <div class="card-body d-flex flex-column">
+                <h6 class="card-title mb-1">{{ item.title|truncatechars:25 }}</h6>
+                <p class="card-text mb-1"><strong>Площадь:</strong> {{ item.area }} м²</p>
+                <p class="card-text mb-1"><strong>Цена:</strong> {{ item.price_usd|floatformat:0|intcomma }} $</p>
+                <a class="btn btn-outline-primary btn-sm mt-auto" href="{% url 'real_estate_detail' item.id %}">
+                  Подробнее
+                </a>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Slider navigation -->
+        <div class="swiper-button-next"></div>
+        <div class="swiper-button-prev"></div>
+      </div>
+    </div>
+
+    <!-- Swiper CSS & JS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        var swiper = new Swiper(".popularSwiper", {
+          loop: true,
+          slidesPerView: 4,
+          spaceBetween: 20,
+          autoplay: {
+            delay: 4000,
+            disableOnInteraction: false,
+          },
+          navigation: {
+            nextEl: ".swiper-button-next",
+            prevEl: ".swiper-button-prev",
+          },
+          breakpoints: {
+            0: { slidesPerView: 1 },   // telefon
+            768: { slidesPerView: 2 }, // planshet
+            992: { slidesPerView: 3 }, // kichik laptop
+            1200: { slidesPerView: 4 } // katta ekran
+          }
+        });
+      });
+    </script>
+
+
+ <!-- Последние видео -->
+    <div class="container mt-3">
+      <h5 class="mb-3">🎬 Последние видео</h5>
+      <div class="swiper mySwiper">
+        <div class="swiper-wrapper">
+          {% for video in reels_videos %}
+          <div class="swiper-slide">
+            <div class="reel-video position-relative">
+
+              <!-- Video -->
+              <video autoplay muted playsinline src="{{ video.video.url }}"></video>
+
+              <!-- Tepada e’lon nomi -->
+              {% if video.real_estate %}
+                <a href="{% url 'real_estate_detail' video.real_estate.id %}"
+                   class="reel-title position-absolute top-0 start-0 w-100 text-center text-white fw-bold bg-dark bg-opacity-50 py-1 text-decoration-none">
+                  {{ video.real_estate.title|truncatechars:30 }}
+                </a>
+              {% endif %}
+
+              <!-- Controls -->
+              <div class="reel-controls">
+                <button class="mute-btn">🔇</button>
+              </div>
+
+            </div>
+          </div>
+          {% empty %}
+          <p>Видео недоступно</p>
+          {% endfor %}
+        </div>
+        <div class="swiper-button-prev"></div>
+        <div class="swiper-button-next"></div>
+      </div>
+    </div>
+       <!-- 🎥 Instagram Reels uslubi -->
+    <link href="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.css" rel="stylesheet"/>
+    <script>
+        var swiper = new Swiper(".mySwiper", {
+            slidesPerView: 4,
+            spaceBetween: 15,
+            loop: true,
+            autoplay: {
+                delay: 10000,
+                disableOnInteraction: false
+            },
+            navigation: {
+                nextEl: ".swiper-button-next",
+                prevEl: ".swiper-button-prev",
+            },
+            breakpoints: {
+                0: { slidesPerView: 1 },
+                576: { slidesPerView: 2 },
+                992: { slidesPerView: 3 },
+                1200: { slidesPerView: 4 }
+            }
+        });
+
+        function pauseAllVideos() {
+            document.querySelectorAll('.reel-video video').forEach(v => {
+                v.pause();
+            });
+        }
+
+        function playActiveVideo() {
+            let activeSlide = document.querySelector('.swiper-slide-active video');
+            if (activeSlide) {
+                activeSlide.play().catch(err => console.log("Video play error:", err));
+                activeSlide.muted = true;
+                activeSlide.onended = function () {
+                    swiper.slideNext();
+                };
+            }
+        }
+
+        // Slayd o‘zgarganda
+        swiper.on('slideChange', function () {
+            pauseAllVideos();
+            setTimeout(playActiveVideo, 300);
+        });
+
+        // Sahifa yuklanganda
+        window.addEventListener('load', function () {
+            playActiveVideo();
+        });
+
+        // Video ustiga bosganda play/pause
+        document.querySelectorAll('.reel-video video').forEach(video => {
+            video.addEventListener('click', function () {
+                if (video.paused) {
+                    pauseAllVideos();
+                    video.play();
+                } else {
+                    video.pause();
+                }
+            });
+        });
+
+    </script>
+
+    <!-- Oценка недвижимости blok -->
+    {% include "real_estate/estimate.html" %}
+    {% include "real_estate/send_to_realtor.html" %}
+
+
+ <!-- Отзывы пользователей -->
+    <hr class="my-5">
+    <div class="container">
+    <h4 class="fw-bold mb-4 text-center">💬 Отзывы пользователей</h4>
+
+     {% if comments %}
+      <!-- Swiper container -->
+      <div class="swiper mySwiper">
+        <div class="swiper-wrapper">
+          {% for comment in comments %}
+          <div class="swiper-slide">
+            <div class="card shadow-sm border-0 rounded-4 p-4 h-100">
+
+              <!-- User info -->
+              <div class="d-flex align-items-center mb-3">
+                <!-- Avatar -->
+                <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2"
+                     style="width:45px; height:45px; font-weight:600;">
+                  {{ comment.name|default:"А"|first|upper }}
+                </div>
+
+                <!-- Foydalanuvchi nomi faqat anonim ko'rinadi -->
+                <div>
+                  <h6 class="mb-0">Анонимный пользователь</h6>
+                  <small class="text-muted">{{ comment.created_at|date:"d.m.Y H:i" }}</small>
+                </div>
+              </div>
+
+              <!-- Izoh matni -->
+              <p class="mb-2">{{ comment.text }}</p>
+
+              <!-- Baholash yulduzlari -->
+              {% with rating=comment.real_estate.ratings.last %}
+                {% if rating %}
+                  <div class="mb-3">
+                    {% for i in "12345" %}
+                      {% if forloop.counter <= rating.rating %}
+                        <span class="text-warning">★</span>
+                      {% else %}
+                        <span class="text-muted">★</span>
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              {% endwith %}
+
+              <!-- Ссылка на объявление -->
+              <div class="text-end">
+                <a href="{% url 'real_estate_detail' comment.real_estate.id %}"
+                   class="text-decoration-none text-primary fw-semibold">
+                  🏠 {{ comment.real_estate.title|default:comment.real_estate.get_type_display }}
+                </a>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Pagination & Navigation -->
+        <div class="swiper-pagination"></div>
+        <div class="swiper-button-next"></div>
+        <div class="swiper-button-prev"></div>
+      </div>
+    {% else %}
+      <p class="text-muted text-center">❌ Пока отзывов нет.</p>
+    {% endif %}
+
+    </div>
+
+    <!-- Отзывы пользователей SwiperJS CSS & JS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script>
+      var swiper = new Swiper(".mySwiper", {
+        loop: true,
+        autoplay: {
+          delay: 4000,
+          disableOnInteraction: false,
+        },
+        slidesPerView: 4,       // ❗ 1 sahifada 4 ta izoh ko'rinadi
+        spaceBetween: 20,       // ❗ kartalar orasidagi bo‘shliq
+        pagination: {
+          el: ".swiper-pagination",
+          clickable: true,
+        },
+        navigation: {
+          nextEl: ".swiper-button-next",
+          prevEl: ".swiper-button-prev",
+        },
+        breakpoints: {
+          0: {
+            slidesPerView: 1,   // telefon
+          },
+          768: {
+            slidesPerView: 2,   // planshet
+          },
+          992: {
+            slidesPerView: 3,   // kichik laptop
+          },
+          1200: {
+            slidesPerView: 4,   // katta ekran
+          },
+        },
+      });
+    </script>
+    <hr style="margin:40px 0;">
+
+</div>
+{% endblock %}

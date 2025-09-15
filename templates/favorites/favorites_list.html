@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Sevimli e’lonlarim</h2>
+
+{% if favorites %}
+    <ul>
+    {% for fav in favorites %}
+        <li>
+            <a href="{% url 'ad_detail' fav.real_estate.id %}">
+                {{ fav.real_estate.title }}
+            </a>
+            <a href="{% url 'remove_from_favorites' fav.real_estate.id %}" class="btn btn-danger btn-sm">
+                O‘chirish
+            </a>
+        </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>Hozircha sevimli e’lonlar yo‘q.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Статистика - Панель управления{% endblock %}
+
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+  body { background:#f6f8fa; }
+  .card-compact { border-radius:12px; box-shadow:0 6px 18px rgba(33,37,41,0.06); }
+  .kpi { font-weight:700; font-size:1.45rem; }
+  .kpi-sub { color:#6c757d; font-size:0.9rem; }
+  .chart-wrap { height:320px; min-height:220px; }
+  .muted-small { color:#6c757d; font-size:0.85rem; }
+  .section-title { font-weight:600; font-size:1.05rem; }
+  .legend-chip { display:inline-block; padding:6px 10px; border-radius:999px; font-size:0.85rem; margin-right:6px; margin-bottom:6px; background:#fff; box-shadow:0 1px 4px rgba(0,0,0,0.04); }
+</style>
+<div class="card p-3 shadow-sm mb-4">
+  <h5>🔎 Фильтрация данных</h5>
+  <form method="get" class="row g-3">
+    <div class="col-md-3">
+      <label class="form-label">Тип недвижимости</label>
+      <select name="property_type" class="form-select">
+        <option value="">Все</option>
+        {% for key, value in property_types.items %}
+          <option value="{{ key }}" {% if request.GET.property_type == key %}selected{% endif %}>{{ value }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-2">
+      <label class="form-label">Цена от ($)</label>
+      <input type="number" name="min_price" class="form-control" value="{{ request.GET.min_price }}">
+    </div>
+
+    <div class="col-md-2">
+      <label class="form-label">Цена до ($)</label>
+      <input type="number" name="max_price" class="form-control" value="{{ request.GET.max_price }}">
+    </div>
+
+    <div class="col-md-3">
+  <label class="form-label">Район</label>
+  <select name="district" class="form-select">
+    <option value="">Все</option>
+    {% for value, label in districts %}
+      <option value="{{ value }}" {% if request.GET.district == value %}selected{% endif %}>
+        {{ label }}
+      </option>
+    {% endfor %}
+  </select>
+</div>
+
+
+    <div class="col-md-2">
+      <label class="form-label">Комнаты</label>
+      <select name="rooms" class="form-select">
+        <option value="">Все</option>
+        <option value="1" {% if request.GET.rooms == "1" %}selected{% endif %}>1</option>
+        <option value="2" {% if request.GET.rooms == "2" %}selected{% endif %}>2</option>
+        <option value="3" {% if request.GET.rooms == "3" %}selected{% endif %}>3</option>
+        <option value="4" {% if request.GET.rooms == "4" %}selected{% endif %}>4+</option>
+      </select>
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label">Дата от</label>
+      <input type="date" name="date_from" class="form-control" value="{{ request.GET.date_from }}">
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label">Дата до</label>
+      <input type="date" name="date_to" class="form-control" value="{{ request.GET.date_to }}">
+    </div>
+
+    <div class="col-md-12 text-end">
+      <button type="submit" class="btn btn-primary">Применить</button>
+      <a href="{% url 'statistics' %}" class="btn btn-secondary">Сбросить</a>
+    </div>
+  </form>
+</div>
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Статистика недвижимости</h3>
+    <div>
+      <!-- Quick filters can live here later -->
+    </div>
+  </div>
+
+  <!-- KPI row -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card card-compact p-3 h-100">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="kpi">
+              {% if price_stats.avg_price %}
+                ${{ price_stats.avg_price|floatformat:0|intcomma }}
+              {% else %}
+                -
+              {% endif %}
+            </div>
+            <div class="kpi-sub">Средняя цена (USD)</div>
+          </div>
+          <div class="text-end">
+            <div class="muted-small">Min: <strong>${{ price_stats.min_price|default:"0"|floatformat:0|intcomma }}</strong></div>
+            <div class="muted-small">Max: <strong>${{ price_stats.max_price|default:"0"|floatformat:0|intcomma }}</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card card-compact p-3 h-100">
+        <div>
+          <div class="kpi">
+            {% if avg_price_m2 %}
+              ${{ avg_price_m2|floatformat:0|intcomma }}/m²
+            {% else %}
+              -
+            {% endif %}
+          </div>
+          <div class="kpi-sub">Средний по рынку 1 м2</div>
+          <div class="muted-small mt-2">Просмотрите низкие/высокие значения по районам в графике ниже.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card card-compact p-3 h-100">
+        <div>
+          <div class="kpi">{{ district_total|intcomma }}</div>
+
+
+          <div class="kpi-sub">Всего объявлений (все регионы)</div>
+          <div class="muted-small mt-2">Активный / проданный фильтр может быть добавлен позже.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts grid -->
+  <div class="row g-4">
+    <!-- Left column: Types + Histogram -->
+    <div class="col-lg-5">
+      <div class="card card-compact p-3 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="section-title">Виды имущество</div>
+          <div class="muted-small">Процент/число</div>
+        </div>
+        <div class="row align-items-center">
+          <div class="col-6">
+            <div class="chart-wrap">
+              <canvas id="typeDonut"></canvas>
+            </div>
+          </div>
+          <div class="col-6">
+            <div id="type-legend" class="mb-2"></div>
+            <div class="muted-small">Самые популярные виды:</div>
+            <ul id="type-list" class="list-unstyled mt-2 mb-0"></ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="card card-compact p-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="section-title">Распределение цен</div>
+          <div class="muted-small">Бины (USD)</div>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="priceHist"></canvas>
+        </div>
+        <div class="mt-2 muted-small">График показывает количество объявлений в ценовом диапазоне.</div>
+      </div>
+    </div>
+
+    <!-- Right column: Districts + Price per m2 -->
+    <div class="col-lg-7">
+      <div class="card card-compact p-3 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="section-title">Объявления по регионам</div>
+          <div class="muted-small">Районы / город</div>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="districtBar"></canvas>
+        </div>
+        <div class="mt-2 d-flex gap-2 flex-wrap" id="district-top-legend"></div>
+      </div>
+
+      <div class="card card-compact p-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="section-title">💲 В среднем $/м2 (районы)</div>
+          <div class="muted-small">Сравнение по району</div>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="m2Bar"></canvas>
+        </div>
+        <div class="mt-2 muted-small">Проверьте точное значение, сделав ховер.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Backenddan keladigan JSON ma'lumotlar (xavfsiz) -->
+{{ price_stats|json_script:"price-stats-data" }}
+
+{{ type_labels|json_script:"type-labels" }}
+{{ type_values|json_script:"type-values" }}
+
+{{ district_labels|json_script:"district-labels" }}
+{{ district_values|json_script:"district-values" }}
+
+{{ hist_labels|json_script:"hist-labels" }}
+{{ hist_values|json_script:"hist-values" }}
+
+
+{{ avg_price_m2|json_script:"avg-m2" }}
+{{ district_m2_labels|json_script:"district-m2-labels" }}
+{{ district_m2_values|json_script:"district-m2-values" }}
+
+
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+(function(){
+  // Safe-get helper
+  function safeParse(id) {
+    const el = document.getElementById(id);
+    if (!el) return null;
+    try { return JSON.parse(el.textContent); } catch(e) { console.error("JSON parse error", id, e); return null; }
+  }
+
+  // Read backend data
+  const priceStats = safeParse("price-stats-data") || {};
+  const typeLabels = safeParse("type-labels") || [];
+  const typeValues = safeParse("type-values") || [];
+  const districtLabels = safeParse("district-labels") || [];
+  const districtValues = safeParse("district-values") || [];
+  const histLabels = safeParse("hist-labels") || [];
+  const histValues = safeParse("hist-values") || [];
+  const avgPriceM2 = safeParse("avg-m2");
+  const districtM2Labels = safeParse("district-m2-labels") || [];
+  const districtM2Values = safeParse("district-m2-values") || [];
+
+  // Utility to format numbers
+  function nfmt(n){ if (n === null || n === undefined) return "-"; return new Intl.NumberFormat().format(Math.round(n)); }
+  function money(n){ if (n === null || n === undefined) return "-"; return "$" + new Intl.NumberFormat().format(Math.round(n)); }
+
+  // Colors palette
+  const palette = [
+    "#4e79a7","#f28e2b","#e15759","#76b7b2","#59a14f","#edc949","#af7aa1","#ff9da7","#9c755f","#bab0ac"
+  ];
+
+  // --- Property Types (Donut) ---
+  const typeCtx = document.getElementById("typeDonut").getContext("2d");
+  const typeDonut = new Chart(typeCtx, {
+    type: "doughnut",
+    data: { labels: typeLabels, datasets: [{ data: typeValues, backgroundColor: palette }] },
+    options: {
+      responsive:true,
+      plugins: {
+        tooltip: { callbacks: {
+          label: function(ctx){ const v = ctx.raw || 0; return ctx.label + ": " + nfmt(v) + " (" + ( (v && (v / (typeValues.reduce((a,b)=>a+b,0)||1))*100).toFixed(1) ) + "%)"; }
+        }},
+        legend: { display:false }
+      }
+    }
+  });
+
+  // Render simple legend + list
+  (function renderTypeLegend(){
+    const legendWrap = document.getElementById("type-legend");
+    const list = document.getElementById("type-list");
+    if(!legendWrap || !list) return;
+    legendWrap.innerHTML = "";
+    list.innerHTML = "";
+    const total = typeValues.reduce((a,b)=>a+b,0) || 1;
+    for(let i=0;i<typeLabels.length;i++){
+      const label = typeLabels[i] || "—";
+      const val = typeValues[i] || 0;
+      const chip = document.createElement("span");
+      chip.className = "legend-chip";
+      chip.style.borderLeft = "6px solid " + (palette[i%palette.length]);
+      chip.textContent = label + " • " + nfmt(val);
+      legendWrap.appendChild(chip);
+
+      const li = document.createElement("li");
+      li.className = "muted-small";
+      li.innerHTML = `<strong>${label}</strong> — ${nfmt(val)} (${((val/total)*100).toFixed(1)}%)`;
+      list.appendChild(li);
+    }
+  })();
+
+  // --- Price histogram (bar) ---
+  const priceCtx = document.getElementById("priceHist").getContext("2d");
+  new Chart(priceCtx, {
+    type: "bar",
+    data: { labels: histLabels, datasets: [{ label: "Объявления", data: histValues, backgroundColor: "#ff9da7" }] },
+    options: {
+      responsive:true,
+      plugins: { legend:{ display:false }, tooltip:{ mode:'index', intersect:false } },
+      scales: { y:{ beginAtZero:true } }
+    }
+  });
+
+  // --- Districts bar chart ---
+  const districtCtx = document.getElementById("districtBar").getContext("2d");
+  // limit labels shown for readability (if many), show top N in full — chart will scroll responsively in narrow screens
+  const districtBar = new Chart(districtCtx, {
+    type: "bar",
+    data: { labels: districtLabels, datasets: [{ label: "Кол-во объявлений", data: districtValues, backgroundColor: palette }] },
+    options: {
+      responsive:true,
+      plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label: ctx => nfmt(ctx.raw) }}},
+      scales: {
+        x: { ticks: { maxRotation: 40, minRotation: 0 } },
+        y: { beginAtZero:true }
+      }
+    }
+  });
+
+  // Small top legend for districts (show top 5)
+  (function renderDistrictTop(){
+    const wrap = document.getElementById("district-top-legend");
+    if(!wrap) return;
+    wrap.innerHTML = "";
+    const items = districtLabels.map((lbl,i)=>({lbl, val: districtValues[i] || 0}));
+    items.sort((a,b)=>b.val - a.val);
+    items.slice(0,5).forEach((it, idx)=>{
+      const chip = document.createElement("div");
+      chip.className = "legend-chip";
+      chip.style.borderLeft = "6px solid "+palette[idx%palette.length];
+      chip.innerHTML = `<strong>${it.lbl}</strong> • ${nfmt(it.val)}`;
+      wrap.appendChild(chip);
+    });
+  })();
+
+  // --- Avg $/m2 per district (horizontal bar for readability) ---
+  const m2Ctx = document.getElementById("m2Bar").getContext("2d");
+  new Chart(m2Ctx, {
+    type: "bar",
+    data: { labels: districtM2Labels, datasets: [{ label: "$/m²", data: districtM2Values, backgroundColor: "#76b7b2" }] },
+    options: {
+      responsive:true,
+      indexAxis: 'y',
+      plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label: ctx => "$" + Math.round(ctx.raw) } } },
+      scales: { x:{ beginAtZero:true } }
+    }
+  });
+
+  // Accessibility / fallback logging
+  console.info("Statistics loaded. Price stats:", priceStats);
+})();
+</script>
+{% endblock %}
