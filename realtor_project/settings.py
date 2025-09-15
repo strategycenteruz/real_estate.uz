@@ -38,6 +38,7 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -124,6 +125,7 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # vaqtinchalik fayllar uchun alohida papka
 TMP_UPLOAD_DIR = MEDIA_ROOT / "tmp"
 os.makedirs(TMP_UPLOAD_DIR, exist_ok=True)
+
 
 # Media fayllar uchun asosiy URL
 SITE_URL = "http://127.0.0.1:4040"  # Localhost uchun
