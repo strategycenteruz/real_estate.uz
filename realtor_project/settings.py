@@ -133,7 +133,7 @@ STATICFILES_DIRS = [
 # Media fayllar uchun asosiy URL
 SITE_URL = "http://127.0.0.1:4040"  # Localhost uchun
 # Agar hosting/serverda bo‘lsa: "https://yourdomain.com"
-ALLOWED_HOSTS = ["real-estate-cvf9.onrender.com", "localhost", "127.0.0.1"]
+ALLOWED_HOSTS = ["real-estate-uz-2.onrender.com", "localhost", "127.0.0.1"]
 
 
 BOT_TOKEN = "7778665104:AAEEf4GljOHqIcQJ99yvjRVk-88NK8TLs6s"
