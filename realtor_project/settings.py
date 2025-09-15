@@ -38,6 +38,7 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -114,26 +115,22 @@ MEDIA_ROOT = BASE_DIR / "media"
 MEDIA_URL = "/media/"
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # vaqtinchalik fayllar uchun alohida papka
 TMP_UPLOAD_DIR = MEDIA_ROOT / "tmp"
 os.makedirs(TMP_UPLOAD_DIR, exist_ok=True)
 
-STATICFILES_DIRS = [
-    BASE_DIR / "static",  # sizda "frontend" emas, "static" bo‘lsa
-]
-
-# STATIC_ROOT = BASE_DIR / "staticfiles"
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
-
 
 # Media fayllar uchun asosiy URL
 SITE_URL = "http://127.0.0.1:4040"  # Localhost uchun
 # Agar hosting/serverda bo‘lsa: "https://yourdomain.com"
-ALLOWED_HOSTS = ["real-estate-cvf9.onrender.com", "localhost", "127.0.0.1"]
+ALLOWED_HOSTS = ["real-estate-uz-2.onrender.com", "localhost", "127.0.0.1"]
 
 
 BOT_TOKEN = "7778665104:AAEEf4GljOHqIcQJ99yvjRVk-88NK8TLs6s"
