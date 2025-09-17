@@ -1,52 +1,102 @@
-{% extends 'base.html' %}
+{% extends 'base_detail.html' %}
 {% block title %}Все объявления{% endblock %}
 {% load humanize %}
 
 {% block content %}
 <h3 class="mb-4">📋 Все объявления</h3>
 
-<table class="table table-bordered table-striped align-middle">
-  <thead class="table-light">
-    <tr>
-      <th>№</th>
-      <th>Фото</th>
-      <th>Название</th>
-      <th>Адрес</th>
-      <th>Статус</th>
-      <th>Цена</th>
-      <th>Дата</th>
-      <th>Действия</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for realestate in realestates %}
-    <tr>
-      <td>{{ forloop.counter }}</td>
-      <td>
-        {% if realestate.images.first %}
-        <img src="{{ realestate.images.first.image.url }}" style="height: 60px; width: 80px; object-fit: cover;" class="rounded">
-        {% endif %}
-      </td>
-      <td>{{ realestate.title }}</td>
-      <td>{{ realestate.location }}</td>
-
-       <td>
+<div class="table-responsive">
+  <table id="realEstateTable" class="table table-hover align-middle text-center">
+    <thead class="table-dark">
+      <tr>
+        <th>№</th>
+        <th>Фото</th>
+        <th>Название</th>
+        <th>Площадь</th>
+        <th>Комнат</th>
+        <th>Статус</th>
+        <th>Цена</th>
+        <th>Дата</th>
+        <th>Действия</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for realestate in realestates %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>
+          {% if realestate.images.first %}
+          <img src="{{ realestate.images.first.image.url }}"
+               class="img-thumbnail shadow-sm realestate-img"
+               style="height: 60px; width: 80px; object-fit: cover; cursor:pointer;"
+               data-bs-toggle="modal" data-bs-target="#imgModal{{ realestate.id }}">
+          <!-- Modal -->
+          <div class="modal fade" id="imgModal{{ realestate.id }}" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+              <div class="modal-content">
+                <div class="modal-body text-center">
+                  <img src="{{ realestate.images.first.image.url }}" class="img-fluid rounded">
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+        </td>
+        <td class="fw-semibold">{{ realestate.title }}</td>
+        <td>{{ realestate.area }}</td>
+        <td>{{ realestate.rooms }}</td>
+        <td>
           <span class="badge {% if realestate.status == 'active' %}bg-danger{% else %}bg-secondary{% endif %}">
             {% if realestate.status == 'active' %}Срочно{% else %}Продано{% endif %}
           </span>
         </td>
-      <td>{{ realestate.price_usd|floatformat:0|intcomma }} $</td>
-      <td>{{ realestate.created_at|date:"d.m.Y" }}</td>
-      <td>
-        <a href="{% url 'real_estate_update' realestate.pk %}" class="btn btn-sm btn-outline-primary">✏️</a>
-        <a href="{% url 'real_estate_delete' realestate.pk %}" class="btn btn-sm btn-outline-danger">🗑️</a>
+        <td class="text-success fw-bold">{{ realestate.price_usd|floatformat:0|intcomma }} $</td>
+        <td>{{ realestate.created_at|date:"d.m.Y" }}</td>
+        <td>
+          <a href="{% url 'real_estate_update' realestate.pk %}"
+             class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="tooltip" title="Редактировать">✏️</a>
+          <a href="{% url 'real_estate_delete' realestate.pk %}"
+             class="btn btn-sm btn-outline-danger" data-bs-toggle="tooltip" title="Удалить">🗑️</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="8" class="text-center text-muted">Объявлений нет.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 
-      </td>
-    </tr>
-    {% empty %}
-    <tr><td colspan="8" class="text-center">Объявлений нет.</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
+<!-- DataTables JS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/dataTables.bootstrap5.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.5/js/dataTables.bootstrap5.min.js"></script>
 
+<script>
+  $(document).ready(function() {
+    $('#realEstateTable').DataTable({
+      "language": {
+        "search": "🔍 Поиск:",
+        "lengthMenu": "Показать _MENU_ записей",
+        "zeroRecords": "Ничего не найдено",
+        "info": "Показано _START_–_END_ из _TOTAL_",
+        "infoEmpty": "Нет записей",
+        "paginate": {
+          "first": "«",
+          "last": "»",
+          "next": "›",
+          "previous": "‹"
+        }
+      },
+      "pageLength": 5,
+      "lengthMenu": [5, 10, 25, 50]
+    });
+
+    // Tooltip init
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+  });
+</script>
 {% endblock %}

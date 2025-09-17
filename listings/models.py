@@ -73,8 +73,6 @@ class RealEstate(models.Model):
     phone = models.CharField(max_length=20, blank=True, verbose_name="Телефон")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата добавления")
     is_approved = models.BooleanField(default=False, verbose_name="Одобрено администратором")
-    is_favorite = models.BooleanField(default=False, verbose_name="В избранном")
-    # likes = models.PositiveIntegerField(default=0, verbose_name="Количество лайков")
     telegram = models.CharField(max_length=100,blank=True,null=True,verbose_name="Telegram username")
 
     views = models.PositiveIntegerField(default=0, blank=True)

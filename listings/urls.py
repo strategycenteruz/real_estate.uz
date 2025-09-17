@@ -20,7 +20,6 @@ urlpatterns = [
     path("profile/", profile, name="profile"),
     path("logout/", custom_logout, name="logout"),
 
-    path("favorites/", views.favorites_list, name="favorites_list"),
     path("favorites/add/<int:pk>/", views.add_to_favorites, name="add_to_favorites"),
     path("favorites/remove/<int:pk>/", views.remove_from_favorites, name="remove_from_favorites"),
 

@@ -1,16 +1,13 @@
 {% load static %}
 {% load humanize %}
 <div class="container mt-3">
-    <h5 class="mb-3">🎬 Последние видео</h5>
     <div class="swiper mySwiper">
         <div class="swiper-wrapper">
             {% for video in reels_videos %}
             <div class="swiper-slide">
                 <div class="reel-video position-relative">
-
                     <!-- Video -->
                     <video autoplay muted playsinline src="{{ video.video.url }}"></video>
-
                     <!-- Tepada e’lon nomi -->
                     {% if video.real_estate %}
                     <a class="reel-title position-absolute top-0 start-0 w-100 text-center text-white fw-bold bg-dark bg-opacity-50 py-1 text-decoration-none"
@@ -18,12 +15,10 @@
                         {{ video.real_estate.title|truncatechars:30 }}
                     </a>
                     {% endif %}
-
                     <!-- Controls -->
                     <div class="reel-controls">
                         <button class="mute-btn">🔇</button>
                     </div>
-
                 </div>
             </div>
             {% empty %}

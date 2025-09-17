@@ -162,68 +162,6 @@
   </div>
 </div>
 
-<!--<style>-->
-<!--.realtor-card {-->
-<!--  background: linear-gradient(135deg, #f9f9f9, #ffffff);-->
-<!--  transition: transform 0.3s, box-shadow 0.3s;-->
-<!--}-->
-<!--.realtor-card:hover {-->
-<!--  transform: translateY(-5px);-->
-<!--  box-shadow: 0 6px 18px rgba(0,0,0,0.15);-->
-<!--}-->
-<!--.status-dot {-->
-<!--  position: absolute;-->
-<!--  bottom: 8px;-->
-<!--  right: 8px;-->
-<!--  width: 14px;-->
-<!--  height: 14px;-->
-<!--  border-radius: 50%;-->
-<!--  border: 2px solid #fff;-->
-<!--}-->
-<!--</style>-->
-
-<!--<script>-->
-<!--document.addEventListener("DOMContentLoaded", function() {-->
-<!--  const form = document.getElementById("estimateForm");-->
-<!--  const resultSection = document.getElementById("result-section");-->
-<!--  const resultDiv = document.getElementById("result");-->
-
-<!--  form.addEventListener("submit", async function(e) {-->
-<!--    e.preventDefault();-->
-
-<!--    resultDiv.innerHTML = `<div class="text-center py-4">-->
-<!--      <div class="spinner-border" role="status"></div>-->
-<!--      <div class="mt-2">Оцениваем...</div></div>`;-->
-
-<!--    const fd = new FormData(form);-->
-<!--    const response = await fetch("{% url 'estimate' %}", {-->
-<!--      method: "POST",-->
-<!--      body: fd,-->
-<!--      headers: {"X-Requested-With": "XMLHttpRequest"}-->
-<!--    });-->
-<!--    const data = await response.json();-->
-
-<!--    if (data.success) {-->
-<!--      // Natija chiqaramiz-->
-<!--      resultDiv.innerHTML = `-->
-<!--        <div class="alert alert-success shadow-sm rounded-4">-->
-<!--          <h4 class="fw-bold">✅ Результат оценки</h4>-->
-<!--          <p class="mb-0">Ориентировочная стоимость:-->
-<!--            <span class="fw-bold text-success">${data.price}</span>-->
-<!--          </p>-->
-<!--          <p class="text-muted mt-2">Тип: <b>${data.property_type}</b> | Район: <b>${data.district}</b></p>-->
-<!--        </div>-->
-<!--      `;-->
-<!--      resultSection.style.display = "block"; // ✅ faqat natija kelganda ko‘rsatamiz-->
-<!--    } else {-->
-<!--      resultDiv.innerHTML = `<div class="alert alert-danger">Ошибка: ${data.error || JSON.stringify(data.errors)}</div>`;-->
-<!--      resultSection.style.display = "block";-->
-<!--    }-->
-<!--  });-->
-<!--});-->
-<!--</script>-->
-
-
 
   <!-- JS (sizning kodlaringiz shu joyda qoladi, men o‘zgartirmadim) -->
   {{ block.super|default_if_none:"" }}

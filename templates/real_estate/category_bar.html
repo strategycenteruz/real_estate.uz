@@ -1,21 +1,89 @@
 {% load static %}
 <head>
   <meta charset="UTF-8">
-  <title>{% block title %}Недвижимость{% endblock %}</title>
+
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <!-- AOS kutubxonasi -->
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+  <style>
+    .category-tiles {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+      margin: 2rem 0;
+    }
+    .category-tile {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .category-tile:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 14px 28px rgba(0,0,0,0.15);
+    }
+    .category-tile a {
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.2rem 1.4rem;
+      min-height: 100px;
+    }
+    .category-info {
+      flex: 1;
+      min-width: 0; /* ellipsis uchun kerak */
+    }
+    .category-title {
+      font-size: 1.0rem;
+      font-weight: 600;
+      margin-bottom: .3rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .category-count {
+      font-size: 0.9rem;
+      color: #6c757d;
+    }
+    .category-icon {
+      width: 52px;
+      height: 52px;
+      object-fit: contain;
+      margin-left: 1rem;
+      transition: transform 0.3s ease;
+    }
+    .category-tile:hover .category-icon {
+      transform: scale(1.15) rotate(5deg);
+    }
+    /* Hover gradient overlay */
+    .category-tile::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(0,123,255,0.08), rgba(0,200,150,0.08));
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .category-tile:hover::before {
+      opacity: 1;
+    }
+  </style>
 </head>
-<!-- AOS kutubxonasi -->
-<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 
 <div class="category-tiles">
   {% for category in categories %}
-  <div class="category-tile" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:1 }}00">
-    <a href="{{ category.url }}">
+  <div class="category-tile" data-aos="zoom-in" data-aos-delay="{{ forloop.counter0|add:1 }}00">
+    <a href="{{ category.url }}" title="{{ category.label }}">
       <div class="category-info">
         <div class="category-title">{{ category.label }}</div>
-        <div class="category-count">{{ category.count }}</div>
+        <div class="category-count">{{ category.count }} объявлений</div>
       </div>
       <img src="{% static category.icon %}" alt="{{ category.label }}" class="category-icon">
     </a>
@@ -27,7 +95,7 @@
 <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 <script>
   AOS.init({
-    duration: 800,  // animatsiya davomiyligi
-    once: true      // faqat bir marta animatsiya bo‘lishi
+    duration: 800,
+    once: true
   });
 </script>

@@ -1,14 +1,82 @@
-{% extends "base.html" %}
-
 {% block title %}Панель{% endblock %}
-
 {% block content %}
-<div class="card shadow">
-  <div class="card-body">
+<style>
+  .dashboard-card {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    border: none;
+    border-radius: 16px;
+    color: white;
+    padding: 2rem;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .dashboard-card h3 {
+    font-weight: 700;
+    font-size: 1.8rem;
+  }
+
+  .dashboard-card p {
+    font-size: 1rem;
+    opacity: 0.9;
+  }
+
+  .dashboard-card .btn {
+    transition: all 0.3s ease;
+    font-weight: 500;
+    border-radius: 8px;
+    padding: 0.6rem 1.2rem;
+  }
+
+  .dashboard-card .btn-success {
+    background: #00c853;
+    border: none;
+  }
+  .dashboard-card .btn-success:hover {
+    background: #00e676;
+    transform: scale(1.05);
+  }
+
+  .dashboard-card .btn-outline-danger {
+    border: 2px solid #ff5252;
+    color: #fff;
+  }
+  .dashboard-card .btn-outline-danger:hover {
+    background: #ff5252;
+    transform: scale(1.05);
+  }
+
+  /* Dekorativ aylanalar */
+  .dashboard-card::before, .dashboard-card::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    z-index: 0;
+  }
+  .dashboard-card::before {
+    width: 180px;
+    height: 180px;
+    top: -50px;
+    right: -50px;
+  }
+  .dashboard-card::after {
+    width: 120px;
+    height: 120px;
+    bottom: -40px;
+    left: -40px;
+  }
+</style>
+
+<div class="dashboard-card">
+  <div class="position-relative" style="z-index: 1;">
     <h3>Здравствуйте, {{ request.user.username }} 👋</h3>
     <p>Вы вошли как <strong>риелтор</strong>. Теперь вы можете добавлять свои объявления.</p>
-    <a href="{% url 'real_estate_create' %}" class="btn btn-success">+ Добавить объявление</a>
-    <a href="{% url 'logout' %}" class="btn btn-outline-danger">Выйти</a>
+    <div class="mt-3 d-flex gap-2">
+      <a href="{% url 'real_estate_create' %}" class="btn btn-success">+ Добавить объявление</a>
+      <a href="{% url 'logout' %}" class="btn btn-outline-danger">Выйти</a>
+    </div>
   </div>
 </div>
 {% endblock %}

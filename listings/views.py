@@ -652,13 +652,7 @@ def toggle_favorite(request, pk):
 
     return redirect("real_estate_detail", pk=pk)
 
-@login_required
-def favorites_list(request):
-    """Foydalanuvchi tanlagan sevimli e'lonlari"""
-    favorites = request.user.favorite_ads.all()
-    return render(request, "listings/favorites_list.html", {"favorites": favorites})
 
-@login_required
 def remove_from_favorites(request, pk):
     """Sevimlilardan olib tashlash"""
     real_estate = get_object_or_404(RealEstate, pk=pk)

@@ -367,3 +367,11 @@ body {
     height: 100%;
     min-height: 250px; /* istasangiz minimal balandlik berasiz */
 }
+.carousel-item img {
+  filter: brightness(70%);
+}
+.carousel-caption h2,
+.carousel-caption p {
+  color: #fff !important;
+}
+

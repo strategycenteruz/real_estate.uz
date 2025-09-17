@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'base_detail.html' %}
 {% load static %}
 {% load humanize %}
 {% block content %}
@@ -127,10 +127,6 @@
             </div>
         </div>
     </div>
-
-
-
-
 
     <!-- Most Important Info -->
     <div class="card p-4 shadow-sm mb-4 mt-3">
@@ -401,6 +397,28 @@
                     }
                 );
             });
+
+            // Favorite tugma pulse effekti
+            document.querySelectorAll("a.position-absolute").forEach(btn => {
+              btn.addEventListener("click", () => {
+                btn.classList.add("pulse");
+                setTimeout(() => btn.classList.remove("pulse"), 600);
+              });
+            });
+
+            // Kommentariyalar "show more"
+            document.addEventListener("DOMContentLoaded", function () {
+              const btn = document.getElementById("showMoreBtn");
+              if (btn) {
+                btn.addEventListener("click", function () {
+                  document.querySelectorAll(".comment-item.d-none").forEach((el, i) => {
+                    setTimeout(() => el.classList.remove("d-none"), i * 150);
+                  });
+                  btn.style.display = "none";
+                });
+              }
+            });
+
     </script>
 </div>
 {% endblock %}

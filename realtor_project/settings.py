@@ -11,7 +11,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-@ttn8sw+4mnws1_zw=gddu7jxnp&yv3-tt)4_ujn8n2j0j4juu'
 
 # SECURITY WARNING: don't run with debug turned on in production!
+# DEBUG = False
 DEBUG = True
+
+
+ALLOWED_HOSTS = [
+    "127.0.0.1",  # lokal ishlatish uchun
+    "localhost",
+    "real-estate-uz-2.onrender.com",  # Render domeningiz
+    "admin9197.pythonanywhere.com",  # PythonAnywhere domeningiz
+    "real-estate.uz",  # Agar o‘z domeningiz bo‘lsa
+]
+
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -111,27 +122,30 @@ LOGOUT_REDIRECT_URL = "/"
 
 CORS_ALLOW_ALL_ORIGINS = True  # yoki xavfsizroq variant keyin qo‘shamiz
 
-MEDIA_ROOT = BASE_DIR / "media"
-MEDIA_URL = "/media/"
-
+# Static files (CSS, JS, images)
 STATIC_URL = '/static/'
 
+# collectstatic uchun (production)
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# faqat local dev vaqtida ishlatiladi
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 
-STATIC_ROOT = BASE_DIR / "staticfiles"
+# Media files (user uploads)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# vaqtinchalik fayllar uchun alohida papka
-TMP_UPLOAD_DIR = MEDIA_ROOT / "tmp"
-os.makedirs(TMP_UPLOAD_DIR, exist_ok=True)
-
-
+# Xavfsizlik sozlamalari (production uchun tavsiya)
+CSRF_TRUSTED_ORIGINS = [
+    "https://real-estate-uz-2.onrender.com",
+    "https://admin9197.pythonanywhere.com/",
+    "https://real-estate.uz",
+]
 # Media fayllar uchun asosiy URL
 SITE_URL = "http://127.0.0.1:4040"  # Localhost uchun
 # Agar hosting/serverda bo‘lsa: "https://yourdomain.com"
-ALLOWED_HOSTS = ["real-estate-uz-2.onrender.com", "localhost", "127.0.0.1"]
-
 
 BOT_TOKEN = "7778665104:AAEEf4GljOHqIcQJ99yvjRVk-88NK8TLs6s"
 CHANNEL_ID = -1002826333742   # albatta minus bilan!
