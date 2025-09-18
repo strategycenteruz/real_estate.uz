@@ -1,10 +1,8 @@
 {% load static %}
 <head>
   <meta charset="UTF-8">
-
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- AOS kutubxonasi -->
   <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 
   <style>
@@ -14,65 +12,112 @@
       gap: 1.5rem;
       margin: 2rem 0;
     }
+
     .category-tile {
       background: #fff;
-      border-radius: 16px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
-      transition: all 0.3s ease;
+      border-radius: 18px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+      transition: all 0.35s ease;
       position: relative;
       overflow: hidden;
       cursor: pointer;
+      border: 2px solid transparent;
+      background-clip: padding-box;
     }
+
     .category-tile:hover {
-      transform: translateY(-6px);
-      box-shadow: 0 14px 28px rgba(0,0,0,0.15);
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: 0 14px 28px rgba(0,0,0,0.12);
+      border: 2px solid rgba(0,123,255,0.3);
     }
+
     .category-tile a {
       text-decoration: none;
       color: inherit;
       display: flex;
-      align-items: center;
+      align-items: normal;
       justify-content: space-between;
-      padding: 1.2rem 1.4rem;
-      min-height: 100px;
+      padding: 1.4rem;
+      min-height: 110px;
     }
+
     .category-info {
       flex: 1;
-      min-width: 0; /* ellipsis uchun kerak */
+      min-width: 0;
     }
+
     .category-title {
-      font-size: 1.0rem;
-      font-weight: 600;
-      margin-bottom: .3rem;
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: .25rem;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      color: #212529;
     }
+
     .category-count {
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       color: #6c757d;
     }
+
     .category-icon {
-      width: 52px;
-      height: 52px;
+      width: 66px;
+      height: 66px;
       object-fit: contain;
       margin-left: 1rem;
-      transition: transform 0.3s ease;
+      transition: transform 0.35s ease;
+      animation: pulse 3s infinite;
     }
+
     .category-tile:hover .category-icon {
-      transform: scale(1.15) rotate(5deg);
+      transform: scale(1.2) rotate(6deg);
+      animation: none;
     }
-    /* Hover gradient overlay */
+
+    /* Gradient hover overlay */
     .category-tile::before {
       content: "";
       position: absolute;
       inset: 0;
       background: linear-gradient(135deg, rgba(0,123,255,0.08), rgba(0,200,150,0.08));
       opacity: 0;
-      transition: opacity 0.3s ease;
+      transition: opacity 0.35s ease;
     }
+
     .category-tile:hover::before {
       opacity: 1;
+    }
+
+    /* Shine effekt */
+    .category-tile::after {
+      content: "";
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(120deg, rgba(255,255,255,0.2) 0%, transparent 60%);
+      transform: rotate(25deg);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .category-tile:hover::after {
+      opacity: 1;
+      animation: shine 1s forwards;
+    }
+
+    @keyframes shine {
+      from { transform: translateX(-100%) rotate(25deg); }
+      to   { transform: translateX(100%) rotate(25deg); }
+    }
+
+    /* Pulsatsiya effekti */
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+      100% { transform: scale(1); }
     }
   </style>
 </head>
@@ -91,11 +136,10 @@
   {% endfor %}
 </div>
 
-<!-- AOS JS -->
 <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 <script>
   AOS.init({
-    duration: 800,
+    duration: 900,
     once: true
   });
 </script>
